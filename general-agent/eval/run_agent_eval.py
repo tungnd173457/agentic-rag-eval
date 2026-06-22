@@ -2,8 +2,10 @@
 
 Mỗi câu: dựng messages [system, user(question)] rồi gọi retrieval.agent.run_agent
 (async generator). Lấy event 'done' → answer + sources. document_ids = các doc_id
-ĐƯỢC TRÍCH DẪN trong câu trả lời (map về 'dsid_'+doc_id); nếu agent không trích
-dẫn thì fallback sang toàn bộ sources đã surface.
+ĐƯỢC TRÍCH DẪN trong câu trả lời (orchestrator khớp tuyệt đối qua CITATION_RE; map
+về 'dsid_'+doc_id). KHÔNG trích dẫn hợp lệ ⇒ document_ids = [] (không đổ surfaced —
+tránh invalid_extra_docs, giữ abstain đúng cho info_not_found); đo bằng cờ
+``no_cite_but_surfaced`` trong _meta.
 
 Ghi 2 file:
   - answers_general_agent.jsonl : 3 khoá {question_id, answer, document_ids} cho
@@ -40,6 +42,7 @@ def _doc_ids_from_sources(sources: list[dict]) -> list[str]:
     ))
 
 
+
 async def answer_one(question: dict, system_prompt: str) -> dict:
     from retrieval.agent.orchestrator import run_agent
 
@@ -69,11 +72,14 @@ async def answer_one(question: dict, system_prompt: str) -> dict:
         }
 
     sources = done.get("sources") or []
+    surfaced = done.get("surfaced_sources") or []
+    # document_ids = các doc agent THỰC SỰ trích dẫn (orchestrator khớp tuyệt đối
+    # qua cite_index). KHÔNG fallback đổ surfaced_sources: tránh invalid_extra_docs
+    # và giữ abstain đúng cho info_not_found/high_level. Mất recall khi agent
+    # retrieved đúng mà quên cite được ĐO bằng cờ no_cite_but_surfaced (không bù).
     doc_ids = _doc_ids_from_sources(sources)
-    used_fallback = False
-    if not doc_ids:  # agent không trích dẫn → dùng tất cả doc đã surface
-        doc_ids = _doc_ids_from_sources(done.get("surfaced_sources") or [])
-        used_fallback = bool(doc_ids)
+    n_surfaced = len(surfaced)
+    no_cite_but_surfaced = (not doc_ids) and n_surfaced > 0
 
     return {
         "question_id": qid,
@@ -85,7 +91,8 @@ async def answer_one(question: dict, system_prompt: str) -> dict:
             "latency_ms": done.get("latency_ms"),
             "flags": done.get("flags"),
             "n_cited": len(sources),
-            "doc_ids_from_fallback": used_fallback,
+            "n_surfaced": n_surfaced,
+            "no_cite_but_surfaced": no_cite_but_surfaced,
         },
     }
 
