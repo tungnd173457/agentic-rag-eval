@@ -98,10 +98,10 @@ def test_fixed_separator_splits_paragraphs():
     assert split_text("a\n\nb\n\nc", 100, "\n\n", SEPS) == ["a", "b", "c"]
 
 
-def test_oversized_piece_split_by_space_into_equal_chunks():
-    text = " ".join(["aaaa"] * 10)  # 49 chars, no newline
-    out = split_text(text, 20, "", SEPS)
-    assert out == ["a" * 20, "a" * 20]
+def test_oversized_piece_split_by_space_preserves_spaces():
+    # Dify-faithful: split on " " re-attaches the separator, so spaces survive
+    # the greedy merge (no "aabb" concatenation).
+    assert split_text("aa bb cc dd", 5, "", SEPS) == ["aa ", "bb ", "cc dd"]
 
 
 def test_char_level_fallback_when_no_separator():
@@ -187,9 +187,10 @@ def _recursive_split(text: str, chunk_size: int, separators: list[str]) -> list[
     sep, rest = _choose_separator(text, separators)
     if sep == "":
         splits = list(text)
-    elif sep == " ":
-        splits = text.split(" ")
     else:
+        # Re-attach the separator to every piece (incl. " ") so the greedy
+        # merge reconstructs the original spacing — Dify keeps separators via
+        # _merge_splits(join=separator); this is the plan-consistent equivalent.
         parts = text.split(sep)
         splits = [p + sep for p in parts[:-1]] + [parts[-1]]
     splits = [s for s in splits if s not in ("", "\n")]
@@ -355,7 +356,8 @@ def test_child_parent_linkage_and_ids(monkeypatch):
     ]
 
 
-def test_leading_separator_stripped(monkeypatch):
+def test_leading_punctuation_preserved(monkeypatch):
+    # Dify-faithful: the splitter does NOT strip leading "."/"。".
     _set(
         monkeypatch,
         PARENT_MODE="full-doc",
@@ -365,7 +367,7 @@ def test_leading_separator_stripped(monkeypatch):
         RECURSIVE_SEPARATORS=SEPS,
     )
     parents, _ = split_document(". leading dot")
-    assert parents[0].text == "leading dot"
+    assert parents[0].text == ". leading dot"
 
 
 def test_validate_rejects_child_larger_than_parent(monkeypatch):
@@ -455,13 +457,6 @@ class Child:
     doc_hash: str = ""
 
 
-def _strip_leading_sep(text: str) -> str:
-    """Bỏ dấu '.'/'。' lạc ở đầu chunk (như Dify), giữ nguyên còn lại."""
-    if text.startswith(".") or text.startswith("。"):
-        return text[1:].strip()
-    return text
-
-
 def split_document(markdown: str) -> tuple[list[Parent], list[Child]]:
     """Clean → tạo parent theo PARENT_MODE → cắt child mỗi parent. Trả
     (parents, children) với id, position, char_count và per-chunk ``doc_hash``."""
@@ -478,8 +473,7 @@ def split_document(markdown: str) -> tuple[list[Parent], list[Child]]:
     parents: list[Parent] = []
     children: list[Child] = []
     child_seq = 0
-    for raw_parent in parent_texts:
-        parent_text = _strip_leading_sep(raw_parent)
+    for parent_text in parent_texts:
         if not parent_text.strip():
             continue
         position = len(parents)
@@ -493,10 +487,9 @@ def split_document(markdown: str) -> tuple[list[Parent], list[Child]]:
             child_ids=[],
             title="",
         )
-        for raw_child in split_text(
+        for child_text in split_text(
             parent_text, app_config.CHILD_MAX_CHARS, app_config.CHILD_SEPARATOR, separators
         ):
-            child_text = _strip_leading_sep(raw_child)
             if not child_text.strip():
                 continue
             child_seq += 1
