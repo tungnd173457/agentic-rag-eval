@@ -498,3 +498,37 @@ query → vector search ─match→ CHILD (index_node_id, score)
 | Config defaults | `configs/feature/__init__.py`, `models/dataset.py` (`AUTOMATIC_RULES`) |
 | Workflow Knowledge Index node | `core/workflow/nodes/knowledge_index/` |
 ```
+
+## 9. So sánh: splitter cũ (4-stage) ↔ splitter mới (recursive-char kiểu Dify)
+
+> Áp dụng cho `general-agent/`. Kiến trúc parent-child cốt lõi không đổi (chỉ child
+> được embed, parent là ngữ cảnh, đo bằng ký tự). Chỉ **thuật toán cắt** thay đổi.
+
+| Khía cạnh | Cũ (4-stage, `blocks.py`+`parent_child.py`) | Mới (recursive-char, `recursive_char.py`) |
+|---|---|---|
+| Parse cấu trúc | Có — Block heading/table/para | Không — text thuần |
+| Ranh giới parent | Cắt theo H1/H2; H3+ gộp vào | Cắt theo `PARENT_SEPARATOR` + size; không biết heading |
+| Bảng (table) | Atomic, cắt theo ROW, lặp header | Coi như text thường |
+| Chống chunk nhỏ | min-size merge + floor-fold + rescue + consolidate (tới fixpoint) | Không có MIN; có thể sinh nhiều parent nhỏ |
+| Cân kích thước | balanced packing (tránh runt) | greedy merge tới sát `chunk_size` |
+| Cấu hình | `PC_PARENT_MIN/MAX`, `PC_CHILD_MIN/MAX`, `PC_CHILD_OVERLAP`, `LEVEL3_*` | `PARENT_MODE`, `PARENT_MAX_CHARS`, `CHILD_MAX_CHARS`, `PARENT/CHILD_SEPARATOR`, `RECURSIVE_SEPARATORS` |
+| Overlap | có (`PC_CHILD_OVERLAP`, mặc định 40) | không (cố định 0) |
+| parent_mode | không (luôn theo heading) | có (`paragraph` / `full-doc`) |
+| title | suy ra từ heading | luôn `""` |
+
+**Map config cũ → mới:**
+
+| Cũ | Mới | Ghi chú |
+|---|---|---|
+| `PC_PARENT_MAX_CHARS=10000` | `PARENT_MAX_CHARS=1024` | đổi default, vẫn là trần parent |
+| `PC_PARENT_MIN_CHARS=2000` | (bỏ) | không còn khái niệm min |
+| `PC_CHILD_MAX_CHARS=512` | `CHILD_MAX_CHARS=512` | giữ |
+| `PC_CHILD_MIN_CHARS=300` | (bỏ) | — |
+| `PC_CHILD_OVERLAP=40` | (bỏ) | overlap = 0 |
+| `LEVEL3_*` | (bỏ) | không thuộc splitter Dify |
+| — | `PARENT_MODE`, `PARENT_SEPARATOR`, `CHILD_SEPARATOR`, `RECURSIVE_SEPARATORS` | mới |
+
+**Ảnh hưởng kỳ vọng:** splitter mới đơn giản, nhanh, không phụ thuộc cấu trúc
+markdown; đổi lại mất khả năng giữ bảng nguyên vẹn và có thể tạo nhiều parent nhỏ
+(không gộp ở tầng trên). Trên benchmark, recall/precision có thể thay đổi tuỳ
+phân bố tài liệu — chạy `eval/local_metrics.py` + LLM judge để đo (xem CLAUDE.md).
