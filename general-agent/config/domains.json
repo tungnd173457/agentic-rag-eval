@@ -1,0 +1,895 @@
+{
+  "version": "2.0",
+  "description": "Domain classification config cho RAG pipeline. Dùng để phân loại file và chunk text vào đúng domain tương ứng.",
+  "usage": "Import config này vào classifier prompt. LLM đọc nội dung chunk/file → match với domain dựa trên keywords + đặc trưng → trả về level1/level2/level3.",
+  "classification_rules": {
+    "priority": "Ưu tiên phân loại theo ý nghĩa ngữ cảnh (semantic) trước, keyword là dấu hiệu hỗ trợ.",
+    "fallback": "Nếu chunk không match bất kỳ domain nào ở cả L1 lẫn L2 → gán level1/level2/level3 = 'general_text'. Nếu đã xác định được L1 + L2 nhưng không match L3 cụ thể → giữ nguyên L1 + L2, chỉ gán level3 = 'general_text'.",
+    "multi_section_docs": "Với tài liệu dài có nhiều section (contract, proposal, brochure), mỗi section/chunk được gán level3 riêng biệt.",
+    "single_page_docs": "Với tài liệu 1-2 trang (invoice, PO, receipt...), toàn bộ file = 1 chunk = 1 level3 duy nhất."
+  },
+  "domains": [
+    {
+      "level1": "project_documentation",
+      "level1_vi": "Project Documentation",
+      "level2_list": [
+        {
+          "level2": "project_proposal",
+          "level2_vi": "Đề cương dự án",
+          "description": "Project_Proposal — Đề cương dự án. Đặc trưng:. Tiêu đề/ngữ cảnh: [Đề án, Đề cương, Dự án triển khai, Phương án, Kế hoạch]. Có mục lục. Mô tả chi tiết mục đích triển khai dự án. Mô tả lộ trình triển khai. Sơ lược ngân sách (khái toán). Không có chữ ký 2 bên (chưa ký kết).",
+          "metadata": {
+            "project_name": "Tên dự án/tiêu đề chính/header/footer lặp lại/hoặc ngay sau cụm Tên dự án (Dự án/Đề án/Đề cương)",
+            "project_address": "Địa chỉ / Địa điểm triển khai dự án",
+            "project_value": "Tổng giá trị ước tính (khái toán / dự toán)",
+            "project_start_date": "Ngày bắt đầu dự án (DD/MM/YYYY)",
+            "project_end_date": "Ngày dự kiến hoàn thành (DD/MM/YYYY)",
+            "document_type": "project_proposal - Đề cương dự án"
+          },
+          "has_level3": true,
+          "level3_list": [
+            {
+              "level3": "project_prop_overview",
+              "description": "project_prop_overview"
+            },
+            {
+              "level3": "project_prop_objectives",
+              "description": "project_prop_objectives"
+            },
+            {
+              "level3": "project_prop_scope",
+              "description": "project_prop_scope"
+            },
+            {
+              "level3": "project_prop_solution",
+              "description": "project_prop_solution"
+            },
+            {
+              "level3": "project_prop_plan",
+              "description": "project_prop_plan"
+            },
+            {
+              "level3": "project_prop_estimate",
+              "description": "project_prop_estimate"
+            },
+            {
+              "level3": "project_prop_organization",
+              "description": "project_prop_organization"
+            },
+            {
+              "level3": "general_text",
+              "description": "Fallback — chunk thuộc loại tài liệu này nhưng không match level 3 cụ thể nào ở trên."
+            }
+          ]
+        },
+        {
+          "level2": "project_contract",
+          "level2_vi": "HĐ triển khai dự án",
+          "description": "Project_Contract — HĐ triển khai dự án. Đặc trưng:. Tiêu đề/ngữ cảnh: [Contract, Agreement, Hợp đồng] , kèm Contract No. Ngày ký, nơi ký. Thông tin đầy đủ hai bên: tên, địa chỉ, MST, người đại diện, chức danh. Cấu trúc WHEREAS – NOW THEREFORE – điều khoản. Giá trị HĐ bằng số và bằng chữ. CÓ Scope of Work / phạm vi công việc chi tiết. CÓ Implementation Schedule / lộ trình triển khai. CÓ nghiệm thu theo giai đoạn. Các điều khoản: thanh toán, bảo hành, phạt, bất khả kháng, tranh chấp. Phụ lục: Technical Specs, BOQ, Timeline. Chữ ký + con dấu hai bên, Ghi rõ số bản gốc.",
+          "metadata": {
+            "contract_no": "Số hợp đồng",
+            "contract_date": "Ngày ký hợp đồng (DD/MM/YYYY)",
+            "contract_place": "Nơi ký hợp đồng",
+            "buyer_name": "Tên đầy đủ Bên mua (Party A/The Client/The Owner/Bên mua)",
+            "buyer_address": "Địa chỉ Bên mua",
+            "seller_name": "Tên đầy đủ Bên bán (Party B/The Contractor/The Supplier/Bên bán)",
+            "seller_address": "Địa chỉ Bên bán",
+            "project_name": "Tên dự án/Project Name",
+            "project_address": "Địa điểm triển khai dự án",
+            "project_start_date": "Ngày bắt đầu triển khai (DD/MM/YYYY)",
+            "project_end_date": "Ngày dự kiến hoàn thành (DD/MM/YYYY)",
+            "project_duration": "Thời gian thực hiện (nếu ghi rõ ví dụ: 12 months)",
+            "warranty_period": "Thời gian bảo hành (nếu có ví dụ: 24 months)",
+            "document_type": "project_contract - HĐ triển khai dự án"
+          },
+          "has_level3": true,
+          "level3_list": [
+            {
+              "level3": "project_con_header",
+              "description": "project_con_header"
+            },
+            {
+              "level3": "project_con_info",
+              "description": "project_con_info"
+            },
+            {
+              "level3": "project_con_scope",
+              "description": "project_con_scope"
+            },
+            {
+              "level3": "project_con_value",
+              "description": "project_con_value"
+            },
+            {
+              "level3": "project_con_pay_term",
+              "description": "project_con_pay_term"
+            },
+            {
+              "level3": "project_con_implement",
+              "description": "project_con_implement"
+            },
+            {
+              "level3": "project_con_accept",
+              "description": "project_con_accept"
+            },
+            {
+              "level3": "project_con_warr",
+              "description": "project_con_warr"
+            },
+            {
+              "level3": "project_con_penalty",
+              "description": "project_con_penalty"
+            },
+            {
+              "level3": "project_con_majeure",
+              "description": "project_con_majeure"
+            },
+            {
+              "level3": "project_con_dispute",
+              "description": "project_con_dispute"
+            },
+            {
+              "level3": "project_con_appendix",
+              "description": "project_con_appendix"
+            },
+            {
+              "level3": "project_con_signatures",
+              "description": "project_con_signatures"
+            },
+            {
+              "level3": "general_text",
+              "description": "Fallback — chunk thuộc loại tài liệu này nhưng không match level 3 cụ thể nào ở trên."
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "level1": "product_information",
+      "level1_vi": "thông tin sản phẩm",
+      "level2_list": [
+        {
+          "level2": "product_brochure",
+          "level2_vi": "Tài liệu giới thiệu sản phẩm",
+          "description": "Product_Brochure — Tài liệu giới thiệu sản phẩm. Tiêu đề/ngữ cảnh: tài liệu quảng bá sản phẩm, catalogue marketing, brochure thương hiệu. chứa thông tin giới thiệu nhà cung cấp (tên công ty, thương hiệu, logo, thông tin liên hệ, xuất xứ). Chứa nhiều ảnh sản phẩm chất lượng cao, thiết kế đồ họa bắt mắt. Nội dung mô tả sản phẩm mang tính quảng bá, nhấn mạnh ưu điểm. Liệt kê các ưu điểm, lợi ích nổi bật của sản phẩm. Cung cấp thông số kỹ thuật dạng sơ lược và/hoặc bảng chi tiết. Đề cập đến tiêu chuẩn, chứng nhận chất lượng (ISO, CE, FDA.). có nội dung hướng dẫn sử dụng sản phẩm. định nghĩa được nhóm khách hàng phù hợp sử dụng sản phẩm. không có thông tin khách hàng mua cụ thể. không có thông tin tổng số tiền thanh toán. Định dạng: PDF/hình ảnh đẹp, thiết kế marketing chuyên nghiệp, đôi khi sẽ có 1 số file định dạng docx. +.",
+          "metadata": {
+            "supplier_company_name": "Tên công ty/nhà sản xuất",
+            "supplier_brand": "Tên thương hiệu (nếu khác tên công ty)",
+            "product_name": ["Tên sản phẩm chính thức"],
+            "document_type": "product_brochure - Tài liệu giới thiệu sản phẩm"
+          },
+          "has_level3": true,
+          "level3_list": [
+            {
+              "level3": "product_broc_overview",
+              "description": "product_broc_overview"
+            },
+            {
+              "level3": "product_broc_specification",
+              "description": "product_broc_specification"
+            },
+            {
+              "level3": "product_broc_certification",
+              "description": "product_broc_certification"
+            },
+            {
+              "level3": "product_broc_guide",
+              "description": "product_broc_guide"
+            },
+            {
+              "level3": "product_broc_target_cus",
+              "description": "product_broc_target_cus"
+            },
+            {
+              "level3": "general_text",
+              "description": "Fallback — chunk thuộc loại tài liệu này nhưng không match level 3 cụ thể nào ở trên."
+            }
+          ]
+        },
+        {
+          "level2": "supplier_offered_product",
+          "level2_vi": "Sản phẩm nhà cung cấp chào thầu",
+          "description": "Supplier_Offered_Product — Sản phẩm nhà cung cấp chào thầu. Đặc trưng:. Tiêu đề/ngữ cảnh: [Supplier's Offered Product, Sản phẩm chào thầu, Bảng đề xuất sản phẩm], thường xuất hiện trong hồ sơ dự thầu. Chứa thông tin: tên sản phẩm, nhà sản xuất, thương hiệu, xuất xứ. mô tả tính năng sản phẩm. thông số kỹ thuật chi tiết — cấu trúc, thành phần, màu sắc, kích cỡ, lớp tráng, nguồn gốc, chỉ định. Hiển thị số lô sản xuất (lot number / batch number). không có thông tin khách hàng mua cụ thể. không có thông tin tổng tiền. hiển thị số lô sản xuất. thường được thiết kế ở dạng form excel chuẩn -> không phải dạng để marketing. có thể chứa cột nhận xét từ bên mời thầu hoặc có thể dùng tiêu đề tiếng anh đối với bản quốc tế \"SUPPLIER'S OFFERED PRODUCT\". Không có thông tin khách hàng mua cụ thể. Không có thông tin tổng số tiền thanh toán. Định dạng: Excel form hoặc bảng chuẩn hóa trong PDF.",
+          "metadata": {
+            "bid_reference": "Mã gói thầu/Bid Reference/Tender No. (nếu có)",
+            "supplier_company_name": "Tên nhà cung cấp/Bidder",
+            "manufacturer_name": "Tên nhà sản xuất (nếu khác nhà cung cấp)",
+            "product": {
+              "product_name": "Tên sản phẩm chào thầu",
+              "trade_name": "Tên thương mại (nếu khác product_name)",
+              "expiry_date": "Hạn sử dụng (nếu có)",
+              "shelf_life": "Thời hạn sử dụng (nếu có ví dụ: 5 years)"
+            },
+            "document_type": "supplier_offered_product - Sản phẩm nhà cung cấp chào thầu"
+          },
+          "has_level3": false,
+          "level3_list": [
+            {
+              "level3": "supplier_offered_product",
+              "description": "Supplier_Offered_Product"
+            },
+            {
+              "level3": "general_text",
+              "description": "Fallback — chunk thuộc loại tài liệu này nhưng không match level 3 cụ thể nào ở trên."
+            }
+          ]
+        },
+        {
+          "level2": "product_catalog",
+          "level2_vi": "Bảng danh mục sản phẩm",
+          "description": "Product_Catalog — Bảng danh mục sản phẩm. Đặc trưng:. Tiêu đề/ngữ cảnh: [Danh mục sản phẩm, Product Catalog, Product List], bảng liệt kê sản phẩm của nhà cung cấp, [Bảng giá, Price List, Báo giá niêm yết, Listed Price]. chứa thông tin giới thiệu nhà cung cấp (tên công ty, logo, thông tin liên hệ). Bảng liệt kê danh mục nhiều sản phẩm: mã sản phẩm (SKU), tên sản phẩm, thông số kỹ thuật kèm theo. Có thể chứa cột giá sản phẩm (giá tham khảo, không phải giá niêm yết chính thức). Có thể chứa cột số lượng tối thiểu (MOQ — áp dụng khi gửi tới đối tác mua hàng). đôi khi chứa ảnh minh họa sản phẩm trong bảng. Tập trung vào thông số kỹ thuật, giá là thông tin phụ. Không có thông tin khách hàng mua cụ thể. Không có thông tin tổng số tiền thanh toán. Định dạng: bảng nhiều dòng, nhiều cột, có thể là Excel hoặc PDF. +",
+          "metadata": {
+            "catalog_title": "Tiêu đề danh mục/tên tài liệu",
+            "catalog_date": "Ngày phát hành/hiệu lực (DD/MM/YYYY)",
+            "supplier_company_name": "Tên công ty/nhà cung cấp",
+            "brand": "Thương hiệu(nếu khác tên công ty)",
+            "currency": "Đơn vị tiền tệ (nếu có cột giá)",
+            "products": [
+              {
+                "sku": "Mã sản phẩm/SKU/Part Number/Catalog No./REF",
+                "product_name": "Tên sản phẩm"
+              }
+            ],
+            "document_type": "product_catalog - Bảng danh mục sản phẩm"
+          },
+          "has_level3": false,
+          "level3_list": [
+            {
+              "level3": "product_catalog",
+              "description": "Product_Catalog"
+            },
+            {
+              "level3": "general_text",
+              "description": "Fallback — chunk thuộc loại tài liệu này nhưng không match level 3 cụ thể nào ở trên."
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "level1": "procurement",
+      "level1_vi": "Đấu thầu – Mua sắm",
+      "level2_list": [
+        {
+          "level2": "giá",
+          "level2_vi": "Bảng báo giá hạng mục dự án",
+          "description": "pricing_table bảng giá danh mục sản phẩm, thông tin đặc trưng:. Tiêu đề/ngữ cảnh: [Bảng báo giá, Bảng giá dự thầu, Price Schedule, Bill of Quantities, Bảng tiên lượng và đơn giá]. Cung cấp thông tin hạng mục thực hiện, tên dự án, địa điểm thực hiện. Ghi rõ tên bên giao thầu (bên A) và tên bên nhận thầu (bên B). Bảng liệt kê hạng mục kèm: số lượng, đơn vị tính, đơn giá, thành tiền. Có phần tổng cộng (subtotal), thuế VAT, và tổng giá trị sau thuế. Do bên nhận thầu (bên B) lập gửi cho bên giao thầu (bên A). Mục đích: đề xuất giá cho 1 dự án / 1 gói thầu cụ thể. Định dạng: Excel form hoặc bảng trong PDF, có cấu trúc hàng — cột rõ ràng.",
+          "metadata": {
+            "document_title": "Tiêu đề bảng báo giá",
+            "document_date": "Ngày lập (DD/MM/YYYY)",
+            "project_name": "Tên dự án/gói thầu",
+            "project_address": "Địa điểm thực hiện",
+            "buyer_name": "Tên bên giao thầu/Chủ đầu tư/Client/Bên mua",
+            "buyer_address": "Địa chỉ (nếu có)",
+            "seller_name": "Tên bên nhận thầu/Nhà cung cấp/Contractor/Bên bán (đơn vị lập báo giá)",
+            "seller_address": "Địa chỉ (nếu có)",
+            "validity": "Thời hạn hiệu lực báo giá (nếu có)",
+            "document_type": "pricing_table - Bảng báo giá hạng mục dự án"
+          },
+          "has_level3": false,
+          "level3_list": [
+            {
+              "level3": "pricing_table",
+              "description": "pricing_table bảng giá danh mục sản phẩm, thông tin đặc trưng:. Tiêu đề/ngữ cảnh: [Bảng báo giá, Bảng giá dự thầu, Price Schedule, Bill of Quantities, Bảng tiên lượng và đơn giá]. Cung cấp thông tin hạng mục thực hiện, tên dự án, địa điểm thực hiện. Ghi rõ tên bên giao thầu (bên A) và tên bên nhận thầu (bên B). Bảng liệt kê hạng mục kèm: số lượng, đơn vị tính, đơn giá, thành tiền. Có phần tổng cộng (subtotal), thuế VAT, và tổng giá trị sau thuế. Do bên nhận thầu (bên B) lập gửi cho bên giao thầu (bên A). Mục đích: đề xuất giá cho 1 dự án / 1 gói thầu cụ thể. Định dạng: Excel form hoặc bảng trong PDF, có cấu trúc hàng — cột rõ ràng"
+            },
+            {
+              "level3": "general_text",
+              "description": "Fallback — chunk thuộc loại tài liệu này nhưng không match level 3 cụ thể nào ở trên."
+            }
+          ]
+        },
+        {
+          "level2": "bid_price_schedule",
+          "level2_vi": "Biểu mẫu so sánh giá thầu",
+          "description": "Bid_Price_Schedule — Biểu mẫu so sánh giá thầu. Đặc trưng:. Tiêu đề/ngữ cảnh: [Bid Price Schedule, Bid Comparison, Price Evaluation Form, Biểu mẫu so sánh giá]. Bảng so sánh nhiều nhà cung cấp song song (mỗi nhà cung cấp 1 cột hoặc 1 nhóm cột). Chứa điều kiện Incoterms (FOB, CIF, DDP.) cho từng nhà cung cấp. Hiển thị đa tiền tệ (USD, EUR, LAK.) và có thể có cột quy đổi về 1 đồng tiền chung. Tách chi tiết các thành phần chi phí: giá sản phẩm, thuế, vận chuyển, phí ngân hàng, giấy phép nhập khẩu. Có dòng tổng cộng (total cost) để so sánh tổng chi phí giữa các nhà cung cấp. Do bên mua (bên mời thầu) lập, không phải do nhà cung cấp. Mục đích: đánh giá và chọn nhà cung cấp có giá cạnh tranh nhất. Định dạng: Excel form chuẩn hóa, nhiều cột, nhiều dòng chi tiết.",
+          "metadata": {
+            "document_title": "Tiêu đề biểu mẫu",
+            "document_date": "Ngày lập (DD/MM/YYYY)",
+            "project_name": "Tên dự án/gói thầu",
+            "project_address": "Địa điểm thực hiện",
+            "evaluation_date": "Ngày đánh giá (nếu có)",
+            "buyer_name": "Tên bên mời thầu/Chủ đầu tư/Purchaser",
+            "buyer_address": "Địa chỉ (nếu có)",
+            "evaluation_currency": "Đồng tiền quy đổi chung để so sánh (nếu có)",
+            "bidders": [
+              {
+                "bidder_name": "Tên nhà cung cấp/nhà thầu",
+                "bidder_country": "Quốc gia (nếu có)"
+              }
+            ],
+            "document_type": "bid_price_schedule - Biểu mẫu so sánh giá thầu"
+          },
+          "has_level3": false,
+          "level3_list": [
+            {
+              "level3": "bid_price_schedule",
+              "description": "Bid_Price_Schedule — Biểu mẫu so sánh giá thầu. Đặc trưng:. Tiêu đề/ngữ cảnh: [Bid Price Schedule, Bid Comparison, Price Evaluation Form, Biểu mẫu so sánh giá]. Bảng so sánh nhiều nhà cung cấp song song (mỗi nhà cung cấp 1 cột hoặc 1 nhóm cột). Chứa điều kiện Incoterms (FOB, CIF, DDP.) cho từng nhà cung cấp. Hiển thị đa tiền tệ (USD, EUR, LAK.) và có thể có cột quy đổi về 1 đồng tiền chung. Tách chi tiết các thành phần chi phí: giá sản phẩm, thuế, vận chuyển, phí ngân hàng, giấy phép nhập khẩu. Có dòng tổng cộng (total cost) để so sánh tổng chi phí giữa các nhà cung cấp. Do bên mua (bên mời thầu) lập, không phải do nhà cung cấp. Mục đích: đánh giá và chọn nhà cung cấp có giá cạnh tranh nhất. Định dạng: Excel form chuẩn hóa, nhiều cột, nhiều dòng chi tiết"
+            },
+            {
+              "level3": "general_text",
+              "description": "Fallback — chunk thuộc loại tài liệu này nhưng không match level 3 cụ thể nào ở trên."
+            }
+          ]
+        },
+        {
+          "level2": "quotation",
+          "level2_vi": "Báo giá sản phẩm",
+          "description": "Quotation - báo giá sản phẩm, thông tin đặc trưng. Tiêu đề có thể chứa \"Quotation\" hoặc \"Báo giá\". Có mã số báo giá (Quotation No.) và mã khách hàng (Client No.). Thông tin đầy đủ hai bên (bên bán và bên mua). Gắn với dự án hoặc đơn hàng cụ thể. Có đơn giá, thành tiền, tổng cộng, VAT. Có thời hạn hiệu lực báo giá (Validity of offer). Có điều kiện thương mại: thanh toán, giao hàng, Incoterms. Có thể có chữ ký và thông tin ngân hàng.",
+          "metadata": {
+            "quotation_no": "Số báo giá / Quotation No. / Offer No. / Ref",
+            "quotation_date": "Ngày báo giá (DD/MM/YYYY)",
+            "revision": "Phiên bản / Revision (nếu có)",
+            "validity": "Thời hạn hiệu lực báo giá",
+            "validity_expiry_date": "Ngày hết hạn cụ thể (DD/MM/YYYY nếu tính được)",
+            "seller_name": "Tên công ty bên bán",
+            "seller_address": "Địa chỉ",
+            "buyer_name": "Tên công ty bên mua / khách hàng",
+            "buyer_address": "Địa chỉ",
+            "project_name": "Tên dự án / đơn hàng liên quan (nếu có)",
+            "items": [{"item_code": "Mã sản phẩm / Part No. / SKU / Model"}],
+            "document_type": "quotation - báo giá sản phẩm"
+          },
+          "has_level3": false,
+          "level3_list": [
+            {
+              "level3": "quotation",
+              "description": "Quotation - báo giá sản phẩm, thông tin đặc trưng. Tiêu đề có thể chứa \"Quotation\" hoặc \"Báo giá\". Có mã số báo giá (Quotation No.) và mã khách hàng (Client No.). Thông tin đầy đủ hai bên (bên bán và bên mua). Gắn với dự án hoặc đơn hàng cụ thể. Có đơn giá, thành tiền, tổng cộng, VAT. Có thời hạn hiệu lực báo giá (Validity of offer). Có điều kiện thương mại: thanh toán, giao hàng, Incoterms. Có thể có chữ ký và thông tin ngân hàng"
+            },
+            {
+              "level3": "general_text",
+              "description": "Fallback — chunk thuộc loại tài liệu này nhưng không match level 3 cụ thể nào ở trên."
+            }
+          ]
+        },
+        {
+          "level2": "sales_contract",
+          "level2_vi": "Hợp đồng mua bán",
+          "description": "Sales_Contract - hợp đồng mua bán, thông tin đặc trưng:. tiêu đề có thể chứa keyword [Sales Contract, Hợp đồng mua bán, Agreement, Contract]. Một số HĐ quốc tế dùng [Sales Agreement, Supply Agreement]. có số hợp đồng, ngày tháng năm làm hợp đồng. Thông tin đầy đủ bên bán (seller, Party A, .): tên, địa chỉ, thông tin liên hệ, thông tin tài khoản thanh toán, có thể có thông tin người đại diện bên bán. Thông tin đầy đủ bên mua (buyer, Party B, .): tên, địa chỉ, thông tin liên hệ, thông tin người đại diện bên mua, chức vụ. có nội dung xác nhận đồng ý mua - bán. danh mục sản phẩm mua-bán: tên, số lượng, đơn vị , tiền, tổng tiền. có chữ ký và đóng dấu của cả bên bán và bên mua. Một số HĐ quốc tế chỉ có chữ ký, không dấu. Các điều kiện/ điều khoản có thể xuất hiện trong hợp đồng: . Điều kiện giao hàng — Incoterms (FOB, CIF, EXW.), địa điểm, thời hạn giao. Điều kiện thanh toán — phương thức (T/T, L/C), thời hạn, đợt thanh toán. Bảo hành — thời gian, điều kiện bảo hành sản phẩm. Phạt vi phạm — mức phạt chậm giao, chậm thanh toán. Bất khả kháng — điều khoản force majeure. Giải quyết tranh chấp — trọng tài, tòa án nào xử lý. Hiệu lực — ngày có hiệu lực, thời hạn HĐ. Ngôn ngữ HĐ — bản nào có giá trị pháp lý (EN/VI).",
+          "metadata": {
+            "contract_no": "Số hợp đồng",
+            "contract_date": "Ngày ký (DD/MM/YYYY)",
+            "contract_place": "Nơi ký",
+            "effective_date": "Ngày có hiệu lực (nếu khác ngày ký)",
+            "expiry_date": "Ngày hết hiệu lực / thời hạn HĐ (nếu có)",
+            "seller_name": "Tên đầy đủ công ty bên bán",
+            "seller_address": "Địa chỉ",
+            "buyer_name": "Tên đầy đủ công ty bên mua",
+            "buyer_address": "Địa chỉ bên mua",
+            "currency": "Đơn vị tiền tệ",
+            "document_type": "Sales_Contract - hợp đồng mua bán"
+          },
+          "has_level3": true,
+          "level3_list": [
+            {
+              "level3": "contract_parties",
+              "description": "contract_parties — Thông tin các bên. Nội dung mang ý nghĩa: thông tin định danh các bên tham gia hợp đồng. Keyword tiếng Việt và tiếng Anh có thể nhận biết: [bên bán, bên mua, seller, buyer, Party A, Party B, đại diện, representative, địa chỉ, address, tài khoản, account]. Số hợp đồng (Contract No.), ngày ký. Thông tin bên bán: tên, địa chỉ, liên hệ, tài khoản thanh toán, người đại diện. Thông tin bên mua: tên, địa chỉ, liên hệ, người đại diện, chức vụ"
+            },
+            {
+              "level3": "contract_product_list",
+              "description": "contract_product_list — Danh mục sản phẩm mua bán. Nội dung mang ý nghĩa: chi tiết hàng hóa/sản phẩm được mua bán trong hợp đồng. Keyword tiếng Việt và tiếng Anh có thể nhận biết: [danh mục, sản phẩm, hàng hóa, product list, goods, item, description, quantity, unit price, amount]. Bảng danh mục sản phẩm: tên, mô tả, số lượng, đơn vị, đơn giá, thành tiền. Tổng giá trị hợp đồng"
+            },
+            {
+              "level3": "contract_delivery_terms",
+              "description": "contract_delivery_terms — Điều kiện giao hàng. Nội dung mang ý nghĩa: quy định về việc giao nhận hàng hóa. Keyword tiếng Việt và tiếng Anh có thể nhận biết: [giao hàng, Incoterms, FOB, CIF, EXW, DDP, delivery, shipment, thời hạn giao, delivery date, lead time, địa điểm giao]. Điều kiện Incoterms, địa điểm giao hàng, thời hạn giao"
+            },
+            {
+              "level3": "contract_payment_terms",
+              "description": "contract_payment_terms — Điều kiện thanh toán. Nội dung mang ý nghĩa: quy định về phương thức và thời hạn thanh toán. Keyword tiếng Việt và tiếng Anh có thể nhận biết: [thanh toán, payment, T/T, L/C, letter of credit, bank transfer, đợt thanh toán, installment, advance payment, deposit]. Phương thức thanh toán (T/T, L/C), thời hạn, đợt thanh toán"
+            },
+            {
+              "level3": "contract_warranty",
+              "description": "contract_warranty — Điều kiện bảo hành. Nội dung mang ý nghĩa: cam kết bảo hành sản phẩm sau bán hàng. Keyword tiếng Việt và tiếng Anh có thể nhận biết: [bảo hành, warranty, guarantee, thời gian bảo hành, warranty period, điều kiện bảo hành, warranty terms]. Thời gian bảo hành, điều kiện bảo hành, phạm vi bảo hành"
+            },
+            {
+              "level3": "contract_penalties",
+              "description": "contract_penalties — Điều khoản phạt vi phạm. Nội dung mang ý nghĩa: quy định xử lý khi một bên vi phạm hợp đồng. Keyword tiếng Việt và tiếng Anh có thể nhận biết: [phạt, vi phạm, penalty, liquidated damages, chậm giao, late delivery, chậm thanh toán, late payment, breach]. Mức phạt chậm giao, chậm thanh toán, tỷ lệ phạt"
+            },
+            {
+              "level3": "contract_force_majeure",
+              "description": "contract_force_majeure — Điều khoản bất khả kháng. Nội dung mang ý nghĩa: quy định xử lý khi xảy ra sự kiện ngoài kiểm soát. Keyword tiếng Việt và tiếng Anh có thể nhận biết: [bất khả kháng, force majeure, thiên tai, natural disaster, dịch bệnh, epidemic, chiến tranh, war]. Định nghĩa sự kiện bất khả kháng, nghĩa vụ thông báo, hậu quả pháp lý"
+            },
+            {
+              "level3": "contract_dispute_resolution",
+              "description": "contract_dispute_resolution — Giải quyết tranh chấp. Nội dung mang ý nghĩa: quy định cơ quan và phương thức giải quyết khi có tranh chấp. Keyword tiếng Việt và tiếng Anh có thể nhận biết: [tranh chấp, dispute, trọng tài, arbitration, tòa án, court, jurisdiction, hòa giải, mediation, luật áp dụng, governing law]. Trọng tài hoặc tòa án giải quyết, luật áp dụng"
+            },
+            {
+              "level3": "contract_validity",
+              "description": "contract_validity — Hiệu lực hợp đồng. Nội dung mang ý nghĩa: quy định thời điểm và thời hạn có hiệu lực của hợp đồng. Keyword tiếng Việt và tiếng Anh có thể nhận biết: [hiệu lực, validity, effective date, ngày có hiệu lực, thời hạn, duration, termination, chấm dứt, ngôn ngữ, language, bản gốc, original]. Ngày có hiệu lực, thời hạn hợp đồng, ngôn ngữ có giá trị pháp lý"
+            },
+            {
+              "level3": "contract_signatures",
+              "description": "contract_signatures — Chữ ký và xác nhận. Nội dung mang ý nghĩa: phần ký kết xác nhận hợp đồng của các bên. Keyword tiếng Việt và tiếng Anh có thể nhận biết: [ký tên, chữ ký, signature, đóng dấu, seal, đại diện, authorized representative, witness]. Chữ ký và con dấu cả bên bán và bên mua. Hợp đồng quốc tế có thể chỉ có chữ ký, không dấu"
+            },
+            {
+              "level3": "general_text",
+              "description": "Fallback — chunk thuộc loại tài liệu này nhưng không match level 3 cụ thể nào ở trên."
+            }
+          ]
+        },
+        {
+          "level2": "bid_acceptance_letter",
+          "level2_vi": "Thư chấp nhận thầu",
+          "description": "Bid_Acceptance_Letter — Thư chấp nhận thầu. Đặc trưng:. Tiêu đề/ngữ cảnh: [Letter of Acceptance, Notification of Award, Thư chấp nhận thầu, Quyết định trúng thầu, Notice of Award]. Bên phát hành: bên mời thầu / chủ đầu tư (bên A). Bên nhận: nhà thầu trúng thầu (bên B). Chứa thông tin gói thầu: tên dự án, số hiệu gói thầu, ngày mở thầu. Nội dung xác nhận chấp nhận hồ sơ dự thầu của nhà thầu. Ghi rõ giá trị trúng thầu (bằng số và bằng chữ). Quy định thời hạn ký hợp đồng chính thức. Yêu cầu bảo lãnh thực hiện hợp đồng (nếu có). Tham chiếu ngược về hồ sơ mời thầu, biên bản đánh giá. Có chữ ký người có thẩm quyền bên mời thầu. Tính chất: văn bản kết quả cuối cùng của quy trình đấu thầu, cầu nối sang giai đoạn ký kết hợp đồng. Định dạng: văn bản hành chính, có tiêu đề, số văn bản, ngày tháng, chữ ký và con dấu.",
+          "metadata": {
+            "letter_no": "Số văn bản/Letter No./Ref",
+            "letter_date": "Ngày phát hành (DD/MM/YYYY)",
+            "issuer_organization": "Tên cơ quan/tổ chức phát hành (bên mời thầu/chủ đầu tư)",
+            "issuer_address": "Địa chỉ",
+            "recipient_company_name": "Tên nhà thầu trúng thầu",
+            "recipient_address": "Địa chỉ nhà thầu",
+            "project_name": "Tên dự án",
+            "project_address": "Địa điểm dự án (nếu có)",
+            "document_type": "bid_acceptance_letter - Thư chấp nhận thầu"
+          },
+          "has_level3": false,
+          "level3_list": [
+            {
+              "level3": "bid_acceptance_letter",
+              "description": "Bid_Acceptance_Letter — Thư chấp nhận thầu. Đặc trưng:. Tiêu đề/ngữ cảnh: [Letter of Acceptance, Notification of Award, Thư chấp nhận thầu, Quyết định trúng thầu, Notice of Award]. Bên phát hành: bên mời thầu / chủ đầu tư (bên A). Bên nhận: nhà thầu trúng thầu (bên B). Chứa thông tin gói thầu: tên dự án, số hiệu gói thầu, ngày mở thầu. Nội dung xác nhận chấp nhận hồ sơ dự thầu của nhà thầu. Ghi rõ giá trị trúng thầu (bằng số và bằng chữ). Quy định thời hạn ký hợp đồng chính thức. Yêu cầu bảo lãnh thực hiện hợp đồng (nếu có). Tham chiếu ngược về hồ sơ mời thầu, biên bản đánh giá. Có chữ ký người có thẩm quyền bên mời thầu. Tính chất: văn bản kết quả cuối cùng của quy trình đấu thầu, cầu nối sang giai đoạn ký kết hợp đồng. Định dạng: văn bản hành chính, có tiêu đề, số văn bản, ngày tháng, chữ ký và con dấu"
+            },
+            {
+              "level3": "general_text",
+              "description": "Fallback — chunk thuộc loại tài liệu này nhưng không match level 3 cụ thể nào ở trên."
+            }
+          ]
+        },
+        {
+          "level2": "purchase_order",
+          "level2_vi": "Phiếu đặt hàng",
+          "description": "Purchase Order - phiếu đặt hàng, thông tin đặc trưng:. Keyword nhận dạng: [Purchase Order, PO, PO No., PO #, Order, Đơn đặt hàng]. tùy vào mức độ đặt hàng sẽ có thông tin chi tiết header : PO Number - mã đơn đặt hàng - đơn đặt hàng số, PO Date - ngày lập đơn , Job Code — mã công việc/dự án , Salesperson — nhân viên phụ trách. Thông tin các bên:. Bên mua (Buyer) — thường ở trên cùng hoặc ghi \"From\" hoặc \"Kính gửi\": tên, địa chỉ, liên hệ, email. Bên bán (Seller/Vendor) — thường ghi \"To\" hoặc \"Vendor\" hoặc \"Supplier\" hoặc \"Bên đặt hàng\": tên, địa chỉ. Ship To — địa chỉ giao hàng (có thể khác địa chỉ bên mua). Bill To — địa chỉ nhận hóa đơn. Danh mục sản phẩm: Tên, mô tả, số lượng, đơn vị, đơn giá, thành tiền, Subtotal, Tax/VAT, Discount (nếu có), Grand Total. Điều kiện kèm theo (thường ở footer): Delivery Date / Lead Time — thời hạn giao hàng, Payment Terms — điều kiện thanh toán, Shipping Method — phương thức vận chuyển, Terms & Conditions — điều kiện chung. Chữ ký: Chỉ bên mua ký duyệt (có thể có Requested by + Approved by). HĐ quốc tế có thể chỉ là thông tin in sẵn, không cần ký tay. Tính chất: văn bản yêu cầu mua hàng chính thức từ bên mua gửi bên bán, xác nhận đặt hàng với số lượng và giá cụ thể. Định dạng: form chuẩn hóa, có thể là Excel, PDF, hoặc xuất từ hệ thống ERP/phần mềm quản lý mua hàng.",
+          "metadata": {
+            "purchase_order_number": "Mã đơn đặt hàng/PO No.",
+            "purchase_order_date": "Ngày lập PO (DD/MM/YYYY)",
+            "buyer_company_name": "Tên công ty bên mua (đơn vị phát hành PO)",
+            "buyer_address": "Địa chỉ bên mua",
+            "vendor_company_name": "Tên nhà cung cấp/Vendor/Supplier",
+            "vendor_address": "Địa chỉ nhà cung cấp",
+            "billing_name": "Tên đơn vị nhận hóa đơn (nếu khác buyer)",
+            "billing_address": "Địa chỉ nhận hóa đơn",
+            "currency": "Đơn vị tiền tệ",
+            "items": [{"item_code": "Mã sản phẩm/SKU/Part No./Model"}],
+            "document_type": "purchase_order - phiếu đặt hàng"
+          },
+          "has_level3": false,
+          "level3_list": [
+            {
+              "level3": "purchase_order",
+              "description": "Purchase_Order - phiếu đặt hàng, thông tin đặc trưng:. Keyword nhận dạng: [Purchase Order, PO, PO No., PO #, Order, Đơn đặt hàng]. tùy vào mức độ đặt hàng sẽ có thông tin chi tiết header : PO Number - mã đơn đặt hàng - đơn đặt hàng số, PO Date - ngày lập đơn , Job Code — mã công việc/dự án , Salesperson — nhân viên phụ trách. Thông tin các bên:. Bên mua (Buyer) — thường ở trên cùng hoặc ghi \"From\" hoặc \"Kính gửi\": tên, địa chỉ, liên hệ, email. Bên bán (Seller/Vendor) — thường ghi \"To\" hoặc \"Vendor\" hoặc \"Supplier\" hoặc \"Bên đặt hàng\": tên, địa chỉ. Ship To — địa chỉ giao hàng (có thể khác địa chỉ bên mua). Bill To — địa chỉ nhận hóa đơn. Danh mục sản phẩm: Tên, mô tả, số lượng, đơn vị, đơn giá, thành tiền, Subtotal, Tax/VAT, Discount (nếu có), Grand Total. Điều kiện kèm theo (thường ở footer): Delivery Date / Lead Time — thời hạn giao hàng, Payment Terms — điều kiện thanh toán, Shipping Method — phương thức vận chuyển, Terms & Conditions — điều kiện chung. Chữ ký: Chỉ bên mua ký duyệt (có thể có Requested by + Approved by). HĐ quốc tế có thể chỉ là thông tin in sẵn, không cần ký tay. Tính chất: văn bản yêu cầu mua hàng chính thức từ bên mua gửi bên bán, xác nhận đặt hàng với số lượng và giá cụ thể. Định dạng: form chuẩn hóa, có thể là Excel, PDF, hoặc xuất từ hệ thống ERP/phần mềm quản lý mua hàng"
+            },
+            {
+              "level3": "general_text",
+              "description": "Fallback — chunk thuộc loại tài liệu này nhưng không match level 3 cụ thể nào ở trên."
+            }
+          ]
+        },
+        {
+          "level2": "invoice",
+          "level2_vi": "Hóa đơn",
+          "description": "Invoice - Hóa đơn, thông tin đặc trưng:. Tiêu đề/ngữ cảnh: [Invoice, Hóa đơn, Invoice No., Số hóa đơn, Tax Invoice, Commercial Invoice, Proforma Invoice, Debit Note, Hóa đơn giá trị gia tăng]. có ngày tháng năm lập hóa đơn. Thông tin bên bán (thường ở trên cùng): tên công ty, địa chỉ, thông tin liên hệ, Mã số thuế (Tax ID / VAT ID), thông tin tài khoản ngân hàng để thanh toán. Thông tin đầy đủ bên mua:\"Bill To\" và/hoặc [Ship To, To], tên, địa chỉ, thông tin liên hệ. Danh mục sản phẩm/dịch vụ dạng bảng: tên, mô tả, số lượng, đơn vị, đơn giá, thành tiền. Có phần tổng: Subtotal, Thuế (VAT/Tax), Discount (nếu có), Grand Total. Có thể chứa: số PO tham chiếu (PO Reference), điều kiện thanh toán (Payment Terms), hạn thanh toán (Due Date). có chữ ký và đóng dấu của cả bên bán, HĐ quốc tế có thể không có dấu, chỉ chữ ký hoặc chỉ có thông tin in sẵn. Tính chất: văn bản yêu cầu thanh toán chính thức từ bên bán gửi bên mua, xác nhận hàng hóa/dịch vụ đã giao và số tiền cần thanh toán. Định dạng: form chuẩn hóa, có thể là PDF, Excel, hoặc xuất từ hệ thống kế toán/ERP.",
+          "metadata": {
+            "invoice_type": "Tax Invoice|Commercial Invoice|Proforma Invoice|Debit Note|Credit Note|Hóa đơn GTGT",
+            "invoice_no": "Số hóa đơn",
+            "invoice_serial": "Ký hiệu/Serial (nếu có, đặc trưng HĐ GTGT VN)",
+            "invoice_date": "Ngày lập hóa đơn (DD/MM/YYYY)",
+            "due_date": "Hạn thanh toán (DD/MM/YYYY)",
+            "seller_name": "Tên công ty bên bán (đơn vị phát hành hóa đơn)",
+            "seller_address": "Địa chỉ bên bán",
+            "buyer_name": "Tên bên mua",
+            "buyer_address": "Địa chỉ bên mua",
+            "ship_to_name": "Nơi giao hàng (nếu khác buyer)",
+            "ship_to_address": "Địa chỉ giao hàng",
+            "currency": "Đơn vị tiền tệ",
+            "items": [{"item_code": "Mã sản phẩm/Part No."}],
+            "document_type": "invoice - hóa đơn"
+          },
+          "has_level3": false,
+          "level3_list": [
+            {
+              "level3": "invoice",
+              "description": "Invoice - Hóa đơn, thông tin đặc trưng:. Tiêu đề/ngữ cảnh: [Invoice, Hóa đơn, Invoice No., Số hóa đơn, Tax Invoice, Commercial Invoice, Proforma Invoice, Debit Note, Hóa đơn giá trị gia tăng]. có ngày tháng năm lập hóa đơn. Thông tin bên bán (thường ở trên cùng): tên công ty, địa chỉ, thông tin liên hệ, Mã số thuế (Tax ID / VAT ID), thông tin tài khoản ngân hàng để thanh toán. Thông tin đầy đủ bên mua:\"Bill To\" và/hoặc [Ship To, To], tên, địa chỉ, thông tin liên hệ. Danh mục sản phẩm/dịch vụ dạng bảng: tên, mô tả, số lượng, đơn vị, đơn giá, thành tiền. Có phần tổng: Subtotal, Thuế (VAT/Tax), Discount (nếu có), Grand Total. Có thể chứa: số PO tham chiếu (PO Reference), điều kiện thanh toán (Payment Terms), hạn thanh toán (Due Date). có chữ ký và đóng dấu của cả bên bán, HĐ quốc tế có thể không có dấu, chỉ chữ ký hoặc chỉ có thông tin in sẵn. Tính chất: văn bản yêu cầu thanh toán chính thức từ bên bán gửi bên mua, xác nhận hàng hóa/dịch vụ đã giao và số tiền cần thanh toán. Định dạng: form chuẩn hóa, có thể là PDF, Excel, hoặc xuất từ hệ thống kế toán/ERP"
+            },
+            {
+              "level3": "general_text",
+              "description": "Fallback — chunk thuộc loại tài liệu này nhưng không match level 3 cụ thể nào ở trên."
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "level1": "finance_payment",
+      "level1_vi": "Tài Chính / Thanh Toán",
+      "level2_list": [
+        {
+          "level2": "payment_request",
+          "level2_vi": "Phiếu yêu cầu thanh toán",
+          "description": "payment_request - phiếu yêu cầu thanh toán, thông tin đặc trưng:. Keyword nhận dạng:[Payment Request, Phiếu yêu cầu thanh toán, Đề nghị thanh toán, Wire Transfer Request]. Thông tin người yêu cầu (thường ở góc phải trên): Requested by - người yêu cầu, Date - ngày lập phiếu, PO Lead Time, JOB Deadline - thời hạn liên quan. Tham chiếu chứng từ gốc (bên trái): No. - số phiếu yêu cầu thanh toán, PO No. - tham chiếu đến Purchase Order, Job Code - mã công việc/dự án, Payer Acc - tài khoản bên trả tiền, Vendor Code - mã nhà cung cấp, SC No. - số Sales Contract (bên phải). Chi tiết thanh toán (thường nằm ở giữa): Total Amount of PO - Tổng giá trị đơn hàng, Total Paid - tiền đã thanh toán trước đó, Amount of this Payment - Số tiền yêu cầu thanh toán lần này, Balance Due - Còn lại phải trả. chi tiết thanh toán theo SC (Sales Contract) - cho phép đối chiếu cả 2 nguồn giữa PO và SC. Thông tin người nhận tiền (Beneficiary): Beneficiary - tên người/công ty nhận tiền, Address - địa chỉ, Account No. - số tài khoản, Bank Name, Bank Address - ngân hàng nhận, SWIFT Code - mã SWIFT (chuyển tiền quốc tế). Phê duyệt (cuối trang): Division Approved by - trưởng bộ phận duyệt, Final Approved by - ban giám đốc duyệt, Transaction Date - ngày thực hiện giao dịch. Cần nhiều cấp phê duyệt - đây là dấu hiệu đặc trưng nhất của chứng từ nội bộ.",
+          "metadata": {
+            "request_no": "Số phiếu yêu cầu thanh toán",
+            "request_date": "Ngày lập phiếu (DD/MM/YYYY)",
+            "payment_purpose": "Mục đích thanh toán(tóm tắt ngắn gọn)",
+            "requester_name": "Người yêu cầu (Requested by)",
+            "requester_department": "Bộ phận/Phòng ban",
+            "requester_date": "Ngày yêu cầu",
+            "payer_name": "Tên công ty bên trả tiền (đơn vị phát hành phiếu)",
+            "beneficiary_name": "Tên người/công ty nhận tiền",
+            "beneficiary_address": "Địa chỉ người nhận tiền",
+            "document_type": "Payment_Request - phiếu yêu cầu thanh toán"
+          },
+          "has_level3": false,
+          "level3_list": [
+            {
+              "level3": "payment_request",
+              "description": "payment_request - phiếu yêu cầu thanh toán, thông tin đặc trưng:. Keyword nhận dạng:[Payment Request, Phiếu yêu cầu thanh toán, Đề nghị thanh toán, Wire Transfer Request]. Thông tin người yêu cầu (thường ở góc phải trên): Requested by - người yêu cầu, Date - ngày lập phiếu, PO Lead Time, JOB Deadline - thời hạn liên quan. Tham chiếu chứng từ gốc (bên trái): No. - số phiếu yêu cầu thanh toán, PO No. - tham chiếu đến Purchase Order, Job Code - mã công việc/dự án, Payer Acc - tài khoản bên trả tiền, Vendor Code - mã nhà cung cấp, SC No. - số Sales Contract (bên phải). Chi tiết thanh toán (thường nằm ở giữa): Total Amount of PO - Tổng giá trị đơn hàng, Total Paid - tiền đã thanh toán trước đó, Amount of this Payment - Số tiền yêu cầu thanh toán lần này, Balance Due - Còn lại phải trả. chi tiết thanh toán theo SC (Sales Contract) - cho phép đối chiếu cả 2 nguồn giữa PO và SC. Thông tin người nhận tiền (Beneficiary): Beneficiary - tên người/công ty nhận tiền, Address - địa chỉ, Account No. - số tài khoản, Bank Name, Bank Address - ngân hàng nhận, SWIFT Code - mã SWIFT (chuyển tiền quốc tế). Phê duyệt (cuối trang): Division Approved by - trưởng bộ phận duyệt, Final Approved by - ban giám đốc duyệt, Transaction Date - ngày thực hiện giao dịch. Cần nhiều cấp phê duyệt - đây là dấu hiệu đặc trưng nhất của chứng từ nội bộ."
+            },
+            {
+              "level3": "general_text",
+              "description": "Fallback — chunk thuộc loại tài liệu này nhưng không match level 3 cụ thể nào ở trên."
+            }
+          ]
+        },
+        {
+          "level2": "remittance",
+          "level2_vi": "Phiếu chuyển tiền",
+          "description": "Remittance - phiếu chuyển tiền (bên bán lập), thông tin đặc trưng:. Tiêu đề/ngữ cảnh: [Remittance, Phiếu chuyển tiền, Biên lai chuyển tiền, Telegraphic Transfer, T/T, Wire Transfer, Bank Transfer, SWIFT Transfer]. Thông tin người gửi tiền (Remitter): tên người/công ty gửi, loại tiền (Remittance Currency), số tiền chuyển (Remittance Amount), tài khoản trích tiền (From Account), SWIFT Code bên gửi (nếu có). Thông tin ngân hàng và người nhận (Beneficiary): ngân hàng trung gian (Intermediary Bank), số tài khoản ngân hàng người nhận (Payee's Bank A/C No.), tên và địa chỉ ngân hàng người nhận, số tài khoản người nhận (Beneficiary's Account Number), tên và địa chỉ người nhận, SWIFT Code bên nhận — đặc trưng nhất của chuyển tiền quốc tế. Nội dung và mục đích: chi tiết thanh toán (Details of Payment), ghi chú gửi ngân hàng (Message To Bank). Thông tin phí chuyển tiền: \"All Correspondent Charges are\" — xác định ai chịu phí (bên gửi / bên nhận / chia đều). Mục đích chuyển tiền (Purpose of Remittance). Tính chất: do bên gửi tiền (bên mua) lập hoặc thực hiện qua hệ thống ngân hàng. Lưu ý: Remittance thường là ảnh chụp màn hình ngân hàng hoặc bản in từ hệ thống banking — có giao diện hệ thống (menu, tab, nút bấm) chứ không phải form Word/Excel như các chứng từ khác. Định dạng: ảnh chụp màn hình, bản in PDF từ hệ thống Internet Banking, hoặc form ngân hàng chuẩn.",
+          "metadata": {
+            "transaction_ref": "Mã giao dịch/Transaction Reference/Ref No.",
+            "transaction_date": "Ngày giao dịch (DD/MM/YYYY)",
+            "value_date": "Ngày giá trị/Value Date (DD/MM/YYYY)",
+            "remitter_name": "Tên người/công ty gửi tiền",
+            "remitter_account_no": "Số tài khoản trích tiền",
+            "beneficiary_name": "Tên người/công ty nhận tiền",
+            "beneficiary_address": "Địa chỉ người nhận",
+            "status": "Trạng thái giao dịch (Completed/Pending/Processing/null)",
+            "document_type": "Remittance - phiếu chuyển tiền"
+          },
+          "has_level3": false,
+          "level3_list": [
+            {
+              "level3": "remittance",
+              "description": "Remittance - phiếu chuyển tiền (bên bán lập), thông tin đặc trưng:. Tiêu đề/ngữ cảnh: [Remittance, Phiếu chuyển tiền, Biên lai chuyển tiền, Telegraphic Transfer, T/T, Wire Transfer, Bank Transfer, SWIFT Transfer]. Thông tin người gửi tiền (Remitter): tên người/công ty gửi, loại tiền (Remittance Currency), số tiền chuyển (Remittance Amount), tài khoản trích tiền (From Account), SWIFT Code bên gửi (nếu có). Thông tin ngân hàng và người nhận (Beneficiary): ngân hàng trung gian (Intermediary Bank), số tài khoản ngân hàng người nhận (Payee's Bank A/C No.), tên và địa chỉ ngân hàng người nhận, số tài khoản người nhận (Beneficiary's Account Number), tên và địa chỉ người nhận, SWIFT Code bên nhận — đặc trưng nhất của chuyển tiền quốc tế. Nội dung và mục đích: chi tiết thanh toán (Details of Payment), ghi chú gửi ngân hàng (Message To Bank). Thông tin phí chuyển tiền: \"All Correspondent Charges are\" — xác định ai chịu phí (bên gửi / bên nhận / chia đều). Mục đích chuyển tiền (Purpose of Remittance). Tính chất: do bên gửi tiền (bên mua) lập hoặc thực hiện qua hệ thống ngân hàng. Lưu ý: Remittance thường là ảnh chụp màn hình ngân hàng hoặc bản in từ hệ thống banking — có giao diện hệ thống (menu, tab, nút bấm) chứ không phải form Word/Excel như các chứng từ khác. Định dạng: ảnh chụp màn hình, bản in PDF từ hệ thống Internet Banking, hoặc form ngân hàng chuẩn"
+            },
+            {
+              "level3": "general_text",
+              "description": "Fallback — chunk thuộc loại tài liệu này nhưng không match level 3 cụ thể nào ở trên."
+            }
+          ]
+        },
+        {
+          "level2": "official_receipt",
+          "level2_vi": "Biên lai thu tiền",
+          "description": "Official Receipt: biên lai thu tiền (bên thu lập sau khi nhận được tiền). Thông tin đặc trưng:. Tiêu đề/ngữ cảnh: [Official Receipt, Biên lai thu tiền, Receipt, Phiếu thu]. trên cùng phiếu thường là thông tin bên xác nhận thu tiền: tên , địa chỉ , thông tin liên hệ số điện thoại, email. Chứa thông tin header: mã số biên lai (Receipt No.), ngày lập (Receipt Date), số hợp đồng (Contract No.), ngày ký hợp đồng (Contract Date). Phía trên bảng là thông tin bên chuyển tiền: tên và địa chỉ. Bảng xác nhận đã nhận tiền (thường có ghi chú \"In payment for the following\") với các cột: Invoice No. (số hóa đơn), Invoice Date (ngày xuất hóa đơn), Description (nội dung), Amount (số tiền). Có tổng số tiền ở cuối bảng: Total Received (kèm đơn vị tiền tệ giao dịch). nốt xác nhận phương thức thanh toán: Payment Mode (Cash (tiền mặt) và Cheque/Ref# (séc)). Cuối biên lai có thông tin người lập: Issued By — xác nhận bên thu tiền đã nhận đủ. Tính chất: do bên thu tiền (bên bán) lập sau khi nhận được tiền, là chứng từ xác nhận hoàn tất thanh toán. Định dạng: form chuẩn hóa, thường là PDF hoặc bản in từ hệ thống kế toán.",
+          "metadata": {
+            "receipt_no": "Mã số biên lai / Receipt No.",
+            "receipt_date": "Ngày lập biên lai (DD/MM/YYYY)",
+            "receiver_name": "Tên công ty / tổ chức thu tiền (bên bán)",
+            "receiver_address": "Địa chỉ tổ chức thu tiền (bên bán)",
+            "payer_name": "Tên bên chuyển tiền (bên mua)",
+            "payer_address": "Địa chỉ bên chuyển tiền (bên mua)",
+            "document_type": "official_receipt - biên lai thu tiền"
+          },
+          "has_level3": false,
+          "level3_list": [
+            {
+              "level3": "official_receipt",
+              "description": "Official Receipt: biên lai thu tiền (bên thu lập sau khi nhận được tiền). Thông tin đặc trưng:. Tiêu đề/ngữ cảnh: [Official Receipt, Biên lai thu tiền, Receipt, Phiếu thu]. trên cùng phiếu thường là thông tin bên xác nhận thu tiền: tên , địa chỉ , thông tin liên hệ số điện thoại, email. Chứa thông tin header: mã số biên lai (Receipt No.), ngày lập (Receipt Date), số hợp đồng (Contract No.), ngày ký hợp đồng (Contract Date). Phía trên bảng là thông tin bên chuyển tiền: tên và địa chỉ. Bảng xác nhận đã nhận tiền (thường có ghi chú \"In payment for the following\") với các cột: Invoice No. (số hóa đơn), Invoice Date (ngày xuất hóa đơn), Description (nội dung), Amount (số tiền). Có tổng số tiền ở cuối bảng: Total Received (kèm đơn vị tiền tệ giao dịch). nốt xác nhận phương thức thanh toán: Payment Mode (Cash (tiền mặt) và Cheque/Ref# (séc)). Cuối biên lai có thông tin người lập: Issued By — xác nhận bên thu tiền đã nhận đủ. Tính chất: do bên thu tiền (bên bán) lập sau khi nhận được tiền, là chứng từ xác nhận hoàn tất thanh toán. Định dạng: form chuẩn hóa, thường là PDF hoặc bản in từ hệ thống kế toán"
+            },
+            {
+              "level3": "general_text",
+              "description": "Fallback — chunk thuộc loại tài liệu này nhưng không match level 3 cụ thể nào ở trên."
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "level1": "authorization",
+      "level1_vi": "Ủy quyền",
+      "level2_list": [
+        {
+          "level2": "manufacturer_authorization_letter",
+          "level2_vi": "Thư ủy quyền nhà sản xuất",
+          "description": "Manufacturer Authorization Letter (Thư ủy quyền nhà sản xuất), tính chất đặc trưng:. Tiêu đề/ngữ cảnh: [Manufacturer Authorization Letter, Letter of Authorization, LoA, Thư ủy quyền, Giấy ủy quyền nhà sản xuất]. Có ngày phát hành (Date of Issue) và có thể có ngày nộp thầu (Date of Bid Submission) nếu phục vụ đấu thầu. Bên nhận thư (To): cơ quan mời thầu hoặc bên yêu cầu xác nhận ủy quyền. Cấu trúc văn bản đặc trưng WHEREAS – THEREFORE: phần xưng danh bên ủy quyền (WHEREAS), sau đó là nội dung ủy quyền cụ thể (THEREFORE). Ba bên liên quan: bên ủy quyền (nhà sản xuất / phân phối gốc), bên được ủy quyền (đại lý địa phương / nhà phân phối), bên nhận thư (cơ quan mời thầu / chủ đầu tư). Liệt kê danh mục sản phẩm / thương hiệu được ủy quyền phân phối hoặc chào thầu. Cam kết bảo hành theo tiêu chuẩn nhà sản xuất. Chữ ký người có thẩm quyền, ghi rõ chức danh và \"duly authorized to sign on behalf of\". Tính chất: văn bản pháp lý xác nhận quyền đại diện, thường nằm trong hồ sơ dự thầu hoặc hồ sơ năng lực. Định dạng: văn bản hành chính trên letterhead nhà sản xuất, có chữ ký, con dấu (hoặc chữ ký điện tử đối với bản quốc tế).",
+          "metadata": {
+            "letter_no": "Số văn bản/Reference No.",
+            "issue_date": "Ngày phát hành (DD/MM/YYYY)",
+            "expiry_date": "Ngày hết hiệu lực (DD/MM/YYYY, nếu có)",
+            "addressee_name": "Tên cơ quan/tổ chức nhận thư (bên mời thầu/chủ đầu tư)",
+            "addressee_address": "Địa chỉ cơ quan/tổ chức nhận thư (bên mời thầu/chủ đầu tư)",
+            "bid_no": "Số gói thầu/IFB No./Tender No. (nếu phục vụ đấu thầu)",
+            "project_name": "Tên dự án liên quan (nếu có)",
+            "authorizer_name": "Tên nhà sản xuất/hãng gốc (bên ủy quyền)",
+            "authorizer_address": "Địa chỉ nhà sản xuất/hãng gốc (bên ủy quyền)",
+            "authorizer_country": "Quốc gia nhà sản xuất",
+            "authorized_party_name": "Tên đại lý/nhà phân phối được ủy quyền",
+            "authorized_party_address": "Địa chỉ đại lý/nhà phân phối được ủy quyền",
+            "products": ["Danh mục sản phẩm/thương hiệu được ủy quyền"],
+            "document_type": "manufacturer_authorization_letter - Thư ủy quyền nhà sản xuất"
+          },
+          "has_level3": false,
+          "level3_list": [
+            {
+              "level3": "manufacturer_authorization_letter",
+              "description": "Manufacturer Authorization Letter (Thư ủy quyền nhà sản xuất), tính chất đặc trưng:. Tiêu đề/ngữ cảnh: [Manufacturer Authorization Letter, Letter of Authorization, LoA, Thư ủy quyền, Giấy ủy quyền nhà sản xuất]. Có ngày phát hành (Date of Issue) và có thể có ngày nộp thầu (Date of Bid Submission) nếu phục vụ đấu thầu. Bên nhận thư (To): cơ quan mời thầu hoặc bên yêu cầu xác nhận ủy quyền. Cấu trúc văn bản đặc trưng WHEREAS – THEREFORE: phần xưng danh bên ủy quyền (WHEREAS), sau đó là nội dung ủy quyền cụ thể (THEREFORE). Ba bên liên quan: bên ủy quyền (nhà sản xuất / phân phối gốc), bên được ủy quyền (đại lý địa phương / nhà phân phối), bên nhận thư (cơ quan mời thầu / chủ đầu tư). Liệt kê danh mục sản phẩm / thương hiệu được ủy quyền phân phối hoặc chào thầu. Cam kết bảo hành theo tiêu chuẩn nhà sản xuất. Chữ ký người có thẩm quyền, ghi rõ chức danh và \"duly authorized to sign on behalf of\". Tính chất: văn bản pháp lý xác nhận quyền đại diện, thường nằm trong hồ sơ dự thầu hoặc hồ sơ năng lực. Định dạng: văn bản hành chính trên letterhead nhà sản xuất, có chữ ký, con dấu (hoặc chữ ký điện tử đối với bản quốc tế)"
+            },
+            {
+              "level3": "general_text",
+              "description": "Fallback — chunk thuộc loại tài liệu này nhưng không match level 3 cụ thể nào ở trên."
+            }
+          ]
+        },
+        {
+          "level2": "authorization_letter_cargo",
+          "level2_vi": "Thư ủy quyền nhận hàng",
+          "description": "Authorization_Letter_Cargo - thư Ủy quyền nhận hàng/vận chuyển). Dấu hiệu nhận biết đặc trưng:. Tiêu đề/ngữ cảnh: [Letter of Authorization, Authorization to Collect Cargo, Authorization to Release Shipment, Giấy ủy quyền nhận hàng, Ủy quyền thông quan]. Bên ủy quyền (Authorizer): chủ hàng/Consignee trên vận đơn. Bên được ủy quyền (Authorized person/company): bên đi nhận hàng thay, thường kèm số CMND/hộ chiếu hoặc mã số công ty. Bên nhận thư (To): hãng tàu, hãng hàng không, kho hàng, hoặc đại lý giao nhận. Thông tin lô hàng cụ thể: B/L number, AWB number, Container No., mô tả hàng hóa. Phạm vi ủy quyền: nhận hàng, ký nhận chứng từ, làm thủ tục thông quan thay. Chữ ký và con dấu của bên ủy quyền. Có thể kèm bản sao giấy tờ tùy thân của người được ủy quyền. Tính chất: văn bản pháp lý cho phép bên thứ ba thay mặt chủ hàng nhận hàng hoặc xử lý chứng từ vận chuyển. Định dạng: văn bản hành chính trên letterhead công ty, có chữ ký, con dấu",
+          "metadata": {
+            "letter_no": "Số văn bản / Reference No.",
+            "issue_date": "Ngày phát hành (DD/MM/YYYY)",
+            "expiry_date": "Ngày hết hiệu lực (DD/MM/YYYY, nếu có)",
+            "addressee_name": "Tên bên nhận thư (hãng tàu / hãng hàng không / kho hàng / đại lý giao nhận)",
+            "addressee_address": "Địa chỉ bên nhận thư (hãng tàu / hãng hàng không / kho hàng / đại lý giao nhận)",
+            "authorizer_name": "Tên công ty ủy quyền (chủ hàng / Consignee trên vận đơn)",
+            "authorizer_address": "Địa chỉ công ty ủy quyền (chủ hàng / Consignee trên vận đơn)",
+            "authorized_party_name": "Tên công ty / cá nhân được ủy quyền nhận hàng",
+            "authorized_party_address": "Địa chỉ công ty / cá nhân được ủy quyền nhận hàng",
+            "products": ["Danh mục sản phẩm/hàng hóa được ủy quyền nhận hàng được ủy quyền"],
+            "document_type": "authorization_letter_cargo - thư Ủy quyền nhận hàng/vận chuyển"
+          },
+          "has_level3": false,
+          "level3_list": [
+            {
+              "level3": "authorization_letter_cargo",
+              "description": "Authorization_Letter_Cargo - thư Ủy quyền nhận hàng/vận chuyển). Dấu hiệu nhận biết đặc trưng:. Tiêu đề/ngữ cảnh: [Letter of Authorization, Authorization to Collect Cargo, Authorization to Release Shipment, Giấy ủy quyền nhận hàng, Ủy quyền thông quan]. Bên ủy quyền (Authorizer): chủ hàng/Consignee trên vận đơn. Bên được ủy quyền (Authorized person/company): bên đi nhận hàng thay, thường kèm số CMND/hộ chiếu hoặc mã số công ty. Bên nhận thư (To): hãng tàu, hãng hàng không, kho hàng, hoặc đại lý giao nhận. Thông tin lô hàng cụ thể: B/L number, AWB number, Container No., mô tả hàng hóa. Phạm vi ủy quyền: nhận hàng, ký nhận chứng từ, làm thủ tục thông quan thay. Chữ ký và con dấu của bên ủy quyền. Có thể kèm bản sao giấy tờ tùy thân của người được ủy quyền. Tính chất: văn bản pháp lý cho phép bên thứ ba thay mặt chủ hàng nhận hàng hoặc xử lý chứng từ vận chuyển. Định dạng: văn bản hành chính trên letterhead công ty, có chữ ký, con dấu"
+            },
+            {
+              "level3": "general_text",
+              "description": "Fallback — chunk thuộc loại tài liệu này nhưng không match level 3 cụ thể nào ở trên."
+            }
+          ]
+        },
+        {
+          "level2": "authorization_letter_bid",
+          "level2_vi": "Thư ủy quyền dự thầu",
+          "description": "Authorization_letter_for_bid (Ủy quyền dự thầu/nhận thầu), tính chất đặc trưng:. Tiêu đề/ngữ cảnh: [Letter of Authorization, Power of Attorney for Bidding, Giấy ủy quyền dự thầu, Ủy quyền tham dự thầu]. Bên ủy quyền: công ty mẹ, trụ sở chính, hoặc thành viên liên danh. Bên được ủy quyền: chi nhánh, văn phòng đại diện, hoặc đối tác liên danh. Bên nhận thư (To): bên mời thầu/chủ đầu tư. Thông tin gói thầu cụ thể: tên dự án, số hiệu gói thầu, ngày đóng thầu. Phạm vi ủy quyền: nộp hồ sơ, tham dự mở thầu, ký hợp đồng, nhận thanh toán. Có thể kèm nghị quyết HĐQT hoặc giấy phép kinh doanh. Chữ ký người đại diện pháp luật và con dấu công ty. Tính chất: văn bản pháp lý ủy quyền tham gia đấu thầu, thường nằm trong hồ sơ dự thầu. Định dạng: văn bản hành chính trên letterhead công ty, có chữ ký, con dấu",
+          "metadata": {
+            "letter_no": "Số văn bản / Reference No.",
+            "issue_date": "Ngày phát hành (DD/MM/YYYY)",
+            "expiry_date": "Ngày hết hiệu lực (DD/MM/YYYY, nếu có)",
+            "addressee_name": "Tên bên mời thầu / chủ đầu tư (bên nhận thư)",
+            "addressee_address": "Địa chỉ bên mời thầu / chủ đầu tư (bên nhận thư)",
+            "authorizer_company_name": "Tên công ty ủy quyền (công ty mẹ / trụ sở chính / thành viên liên danh)",
+            "authorizer_address": "Địa chỉ công ty ủy quyền (công ty mẹ / trụ sở chính / thành viên liên danh)",
+            "authorized_party_name": "Tên đơn vị được ủy quyền (chi nhánh / VPĐD / đối tác liên danh/ hoặc là tên nếu người được ủy quyền là cá nhân)",
+            "authorized_party_address": "Địa chỉ đơn vị được ủy quyền (chi nhánh / VPĐD / đối tác liên danh/ hoặc là tên nếu người được ủy quyền là cá nhân)",
+            "project_name": "Tên dự án",
+            "document_type": "authorization_letter_bid - Ủy quyền dự thầu/nhận thầu"
+          },
+          "has_level3": false,
+          "level3_list": [
+            {
+              "level3": "authorization_letter_bid",
+              "description": "Authorization_letter_for_bid (Ủy quyền dự thầu/nhận thầu), tính chất đặc trưng:. Tiêu đề/ngữ cảnh: [Letter of Authorization, Power of Attorney for Bidding, Giấy ủy quyền dự thầu, Ủy quyền tham dự thầu]. Bên ủy quyền: công ty mẹ, trụ sở chính, hoặc thành viên liên danh. Bên được ủy quyền: chi nhánh, văn phòng đại diện, hoặc đối tác liên danh. Bên nhận thư (To): bên mời thầu/chủ đầu tư. Thông tin gói thầu cụ thể: tên dự án, số hiệu gói thầu, ngày đóng thầu. Phạm vi ủy quyền: nộp hồ sơ, tham dự mở thầu, ký hợp đồng, nhận thanh toán. Có thể kèm nghị quyết HĐQT hoặc giấy phép kinh doanh. Chữ ký người đại diện pháp luật và con dấu công ty. Tính chất: văn bản pháp lý ủy quyền tham gia đấu thầu, thường nằm trong hồ sơ dự thầu. Định dạng: văn bản hành chính trên letterhead công ty, có chữ ký, con dấu"
+            },
+            {
+              "level3": "general_text",
+              "description": "Fallback — chunk thuộc loại tài liệu này nhưng không match level 3 cụ thể nào ở trên."
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "level1": "certificate",
+      "level1_vi": "giấy chứng nhận/ tiêu chuẩn",
+      "level2_list": [
+        {
+          "level2": "certificate",
+          "level2_vi": "Giấy chứng nhận / Tiêu chuẩn",
+          "description": "certificate - giấy chứng nhận/ tiêu chuẩn chứa nhóm thông tin. Tiêu đề/ngữ cảnh: [Certificate, Certificate of Conformity, CE Certificate, ISO Certificate, Giấy chứng nhận, Chứng chỉ, Certificate of Registration, Certificate of Compliance]. Số giấy chứng nhận (Certificate No.). Mã Notified Body — tổ chức thẩm định (ví dụ: NB 0123, Notified Body ID). Cơ sở pháp lý: Directive / Regulation được trích dẫn (ví dụ: EU MDR 2017/745, ISO 13485, ISO 9001). Danh mục sản phẩm và phân loại (class, nếu áp dụng — ví dụ: Class I, Class IIa, Class III). Thời hạn hiệu lực: ngày cấp (Date of Issue), ngày hết hạn (Expiry Date / Valid Until). Thông tin bên cấp chứng nhận: tên tổ chức, địa chỉ, thông tin liên hệ. Thông tin bên được cấp chứng nhận (tên, địa chỉ, liên hệ). Chữ ký và/hoặc con dấu xác thực. Tính chất: văn bản xác nhận sản phẩm / hệ thống quản lý đạt tiêu chuẩn quy định, thường nằm trong hồ sơ dự thầu hoặc hồ sơ năng lực. Định dạng: văn bản chính thức trên letterhead tổ chức cấp, có chữ ký, con dấu, mã QR xác thực (nếu có).",
+          "metadata": {
+            "certificate_no": "Số giấy chứng nhận / Certificate No.",
+            "certificate_type": "Loại chứng nhận (CE / ISO 9001 / ISO 13485 / FDA 510(k) / CoC / CoA / ...)",
+            "issuer_name": "Tên tổ chức cấp chứng nhận",
+            "issuer_address": "Địa chỉ tổ chức cấp chứng nhận",
+            "holder_name": "Tên công ty được cấp chứng nhận",
+            "holder_address": "Địa chỉ công ty được cấp chứng nhận",
+            "holder_country": "Quốc gia của công ty được cấp chứng nhận",
+            "products": ["Danh mục sản phẩm được chứng nhận"],
+            "issue_date": "Ngày cấp (DD/MM/YYYY)",
+            "expiry_date": "Ngày hết hạn (DD/MM/YYYY)",
+            "first_issue_date": "Ngày cấp lần đầu (nếu là gia hạn)",
+            "document_type": "Certificate - giấy chứng nhận/ tiêu chuẩn"
+          },
+          "has_level3": true,
+          "level3_list": [
+            {
+              "level3": "certificate_product",
+              "description": "Certificate_Product — Chứng nhận sản phẩm. Đặc trưng:. Tiêu đề/ngữ cảnh: [CE Certificate, Certificate of Conformity, DoC, Declaration of Conformity, Giấy chứng nhận hợp quy]. Chứng nhận cho sản phẩm cụ thể đạt tiêu chuẩn. Có danh mục sản phẩm và phân loại (Class I, IIa, IIb, III). Cơ sở pháp lý: EU MDR 2017/745, EU IVDR 2017/746, Directive 93/42/EEC. Mã Notified Body (NB 0123.). Ví dụ: CE Certificate cho thiết bị y tế, chứng nhận TCVN cho sản phẩm"
+            },
+            {
+              "level3": "certificate_qms",
+              "description": "Certificate_QMS — Chứng nhận hệ thống quản lý. Đặc trưng:. Tiêu đề/ngữ cảnh: [ISO Certificate, Certificate of Registration, QMS Certificate, Chứng nhận hệ thống quản lý]. Chứng nhận cho hệ thống quản lý của công ty (không phải sản phẩm cụ thể). Tiêu chuẩn: ISO 9001 (chất lượng), ISO 13485 (y tế), ISO 14001 (môi trường), ISO 45001 (an toàn). Phạm vi chứng nhận (Scope): mô tả hoạt động được chứng nhận. Ví dụ: ISO 13485 cho nhà máy sản xuất thiết bị y tế"
+            },
+            {
+              "level3": "certificate_free_sale",
+              "description": "Certificate_Free_Sale — Chứng nhận lưu hành tự do. Đặc trưng:. Tiêu đề/ngữ cảnh: [Certificate of Free Sale, CFS, Giấy chứng nhận lưu hành tự do]. Xác nhận sản phẩm được phép lưu hành tại nước sản xuất. Thường yêu cầu khi xuất khẩu, nhập khẩu. Do cơ quan quản lý nhà nước cấp (FDA, Bộ Y tế.)"
+            },
+            {
+              "level3": "certificate_analysis",
+              "description": "Certificate_Analysis — Phiếu kiểm nghiệm / CoA. Đặc trưng:. Tiêu đề/ngữ cảnh: [Certificate of Analysis, CoA, Phiếu kiểm nghiệm, Test Report, Analysis Certificate]. Kết quả kiểm nghiệm cụ thể theo lô sản xuất (Batch/Lot number). Bảng kết quả: chỉ tiêu kiểm tra, phương pháp, giá trị đo được, giới hạn cho phép, kết luận đạt/không đạt. Do phòng thí nghiệm hoặc nhà sản xuất cấp"
+            },
+            {
+              "level3": "certificate_msds",
+              "description": "Certificate_MSDS — Bảng dữ liệu an toàn hóa chất. Đặc trưng:. Tiêu đề/ngữ cảnh: [MSDS, SDS, Material Safety Data Sheet, Safety Data Sheet, Bảng dữ liệu an toàn]. Thông tin an toàn hóa chất: thành phần, mối nguy, sơ cứu, chữa cháy, bảo quản, xử lý tràn đổ. Theo chuẩn GHS (Globally Harmonized System)"
+            },
+            {
+              "level3": "general_text",
+              "description": "Fallback — chunk thuộc loại tài liệu này nhưng không match level 3 cụ thể nào ở trên."
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "level1": "technical_specification",
+      "level1_vi": "Hồ sơ kỹ thuật",
+      "level2_list": [
+        {
+          "level2": "technical_specification_boq",
+          "level2_vi": "Bảng thống kê vật tư / BOQ",
+          "description": "Technical_Specification_BOQ - hồ sơ kỹ thuật: Bảng thống kê vật tư / Bill of Quantities, thông tin đặc trưng:. Tiêu đề/ngữ cảnh: [Technical Specification, Bill of Quantities, BOQ, Bảng thống kê vật tư, Equipment List, Material Schedule, Danh mục thiết bị]. Cấu trúc bảng ma trận: địa điểm (locations/sites) × thiết bị (equipment/items) — mỗi ô chứa số lượng. Chỉ chứa số lượng, không có đơn giá hay thành tiền. Danh mục thiết bị tạo thành một hệ thống kỹ thuật hoàn chỉnh (ví dụ: hệ thống mạng, hệ thống điện, hệ thống y tế). Có thể phân nhóm thiết bị theo chức năng hoặc hạng mục kỹ thuật. Có thể có cột mô tả thông số kỹ thuật yêu cầu (specifications) kèm theo từng thiết bị. Có dòng tổng số lượng theo từng thiết bị hoặc theo từng địa điểm. Mục đích: xác định phạm vi cung cấp thiết bị cho dự án, làm cơ sở để nhà thầu báo giá. Tính chất: tài liệu kỹ thuật thuộc giai đoạn thiết kế / lập hồ sơ mời thầu, do bên tư vấn hoặc chủ đầu tư lập. Định dạng: Excel hoặc bảng trong PDF, nhiều dòng nhiều cột, cấu trúc ma trận rõ ràng.",
+          "metadata": {
+            "document_title": "Tiêu đề tài liệu",
+            "document_date": "Ngày lập (DD/MM/YYYY)",
+            "document_version": "Phiên bản / Revision",
+            "project_name": "Tên dự án",
+            "project_address": "Địa điểm dự án",
+            "product": ["danh sách Tên nhóm thiết bị / hạng mục kỹ thuật"],
+            "document_type": "Technical_Specification_BOQ"
+          },
+          "has_level3": false,
+          "level3_list": [
+            {
+              "level3": "technical_specification_boq",
+              "description": "Technical_Specification_BOQ - hồ sơ kỹ thuật: Bảng thống kê vật tư / Bill of Quantities, thông tin đặc trưng:. Tiêu đề/ngữ cảnh: \"\"Technical Specification\"\", \"\"Bill of Quantities\"\", \"\"BOQ\"\", \"\"Bảng thống kê vật tư\"\", \"\"Equipment List\"\", \"\"Material Schedule\"\", \"\"Danh mục thiết bị\"\". Cấu trúc bảng ma trận: địa điểm (locations/sites) × thiết bị (equipment/items) — mỗi ô chứa số lượng. Chỉ chứa số lượng, không có đơn giá hay thành tiền. Danh mục thiết bị tạo thành một hệ thống kỹ thuật hoàn chỉnh (ví dụ: hệ thống mạng, hệ thống điện, hệ thống y tế). Có thể phân nhóm thiết bị theo chức năng hoặc hạng mục kỹ thuật. Có thể có cột mô tả thông số kỹ thuật yêu cầu (specifications) kèm theo từng thiết bị. Có dòng tổng số lượng theo từng thiết bị hoặc theo từng địa điểm. Mục đích: xác định phạm vi cung cấp thiết bị cho dự án, làm cơ sở để nhà thầu báo giá. Tính chất: tài liệu kỹ thuật thuộc giai đoạn thiết kế / lập hồ sơ mời thầu, do bên tư vấn hoặc chủ đầu tư lập. Định dạng: Excel hoặc bảng trong PDF, nhiều dòng nhiều cột, cấu trúc ma trận rõ ràng"
+            },
+            {
+              "level3": "general_text",
+              "description": "Fallback — chunk thuộc loại tài liệu này nhưng không match level 3 cụ thể nào ở trên."
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "level1": "logistics_shipping",
+      "level1_vi": "Vận chuyển/Giao hàng",
+      "level2_list": [
+        {
+          "level2": "packing_list_internal",
+          "level2_vi": "Phiếu đóng gói nội bộ",
+          "description": "packing_list_internal - phiếu đóng gói hàng hóa kiểm tra nội bộ: Dấu hiệu nhận biết đặc trưng:. Tiêu đề/ngữ cảnh: [Packing List, Cargo Packing List]. Có ghi chú \"For Internal Checking Purposes\" hoặc \"Internal Use Only\" — tập trung việc đóng gói kiểm tra trong nội bộ. Tập trung vào tổng số thùng/kiện (Total Cartons/Boxes) và ngày đóng gói. Thông tin đơn giản hơn bản đối ngoại: có thể thiếu thông tin công ty đầy đủ, không có phần ký duyệt chính thức, không bắt buộc có Net weight/Gross weight chi tiết từng dòng. Mục đích: nhân viên kho/logistics kiểm tra đối chiếu, không dùng cho hải quan hay khách hàng. Mục đích: nhân viên kho/logistics kiểm tra đối chiếu, không dùng cho hải quan hay khách hàng. Định dạng: form đơn giản, thường là Excel hoặc bản in nội bộ.",
+          "metadata": {
+            "packing_list_no": "Số phiếu đóng gói",
+            "packing_date": "Ngày đóng gói (DD/MM/YYYY)",
+            "checked_by": "Người kiểm tra",
+            "po_number": "Số PO tham chiếu (nếu có)",
+            "invoice_no": "Số Invoice (nếu có)",
+            "document_type": "packing_list_internal - phiếu đóng gói hàng hóa kiểm tra nội bộ"
+          },
+          "has_level3": false,
+          "level3_list": [
+            {
+              "level3": "packing_list_internal",
+              "description": "packing_list_internal - phiếu đóng gói hàng hóa kiểm tra nội bộ: Dấu hiệu nhận biết đặc trưng:. Tiêu đề/ngữ cảnh: [Packing List, Cargo Packing List]. Có ghi chú \"For Internal Checking Purposes\" hoặc \"Internal Use Only\" — tập trung việc đóng gói kiểm tra trong nội bộ. Tập trung vào tổng số thùng/kiện (Total Cartons/Boxes) và ngày đóng gói. Thông tin đơn giản hơn bản đối ngoại: có thể thiếu thông tin công ty đầy đủ, không có phần ký duyệt chính thức, không bắt buộc có Net weight/Gross weight chi tiết từng dòng. Mục đích: nhân viên kho/logistics kiểm tra đối chiếu, không dùng cho hải quan hay khách hàng. Mục đích: nhân viên kho/logistics kiểm tra đối chiếu, không dùng cho hải quan hay khách hàng. Định dạng: form đơn giản, thường là Excel hoặc bản in nội bộ"
+            },
+            {
+              "level3": "general_text",
+              "description": "Fallback — chunk thuộc loại tài liệu này nhưng không match level 3 cụ thể nào ở trên."
+            }
+          ]
+        },
+        {
+          "level2": "packing_list_external",
+          "level2_vi": "Phiếu đóng gói đối ngoại",
+          "description": "packing_list_external - phiếu đóng gói hàng hóa . Dấu hiệu nhận biết đặc trưng:. Tiêu đề/ngữ cảnh: [Packing List, Cargo Packing List] hiển thị rõ ràng, kèm mã số Packing List. nội dung không chứa ghi chú \"For Internal Checking Purposes\". Phiếu này dùng để gửi khách hàng và nộp hải quan. Thông tin quản lý lô hàng: Date , Your Ref#, Our Ref#, Salesperson, Job code . Bộ mã này gắn với một lô hàng cụ thể. Thông tin quản lý lô hàng: Date, Your Ref#, Our Ref#, Salesperson, Job Code — bộ mã này gắn với một lô hàng cụ thể. Cấu trúc bảng đặc trưng đóng gói: các cột SN#, Product ID, Description, Qty, UM, Packing, Net weight (kg), Gross weight (kg) — đặc biệt việc tách Net weight và Gross weight là dấu hiệu rất đặc trưng. Thông tin trọng lượng và thể tích tổng, Total volume . Đây là thông tin phục vụ vận chuyển và thông quan. Thông tin nhà sản xuất - ghi rõ nguồn gốc sản xuất hàng hóa. Có phần ký duyệt - xác nhận lô hàng đã được kiểm tra và phê duyệt. Thông tin bên lập: đầy đủ tên, địa chỉ, điện thoại, fax, email, website bên lập. Nội dung phiếu này không ghi bên nhận hàng. Định dạng: form chuẩn hóa, PDF hoặc Excel, đầy đủ thông tin cho hải quan.",
+          "metadata": {
+            "packing_list_no": "Số phiếu đóng gói / Packing List No.",
+            "date": "Ngày lập (DD/MM/YYYY)",
+            "issuer_name": "Tên công ty lập phiếu (bên giao hàng)",
+            "issuer_address": "Địa chỉ công ty lập phiếu (bên giao hàng)",
+            "recipient_name": "Tên đơn vị / cơ quan nhận hàng",
+            "recipient_department": "Phòng ban / bộ phận cụ thể (nếu có)",
+            "recipient_address": "Địa chỉ đơn vị / cơ quan nhận hàng",
+            "document_type": "packing_list_external - phiếu đóng gói hàng hóa"
+          },
+          "has_level3": false,
+          "level3_list": [
+            {
+              "level3": "packing_list_external",
+              "description": "packing_list_external - phiếu đóng gói hàng hóa . Dấu hiệu nhận biết đặc trưng:. Tiêu đề/ngữ cảnh: [Packing List, Cargo Packing List] hiển thị rõ ràng, kèm mã số Packing List. nội dung không chứa ghi chú \"For Internal Checking Purposes\". Phiếu này dùng để gửi khách hàng và nộp hải quan. Thông tin quản lý lô hàng: Date , Your Ref#, Our Ref#, Salesperson, Job code . Bộ mã này gắn với một lô hàng cụ thể. Thông tin quản lý lô hàng: Date, Your Ref#, Our Ref#, Salesperson, Job Code — bộ mã này gắn với một lô hàng cụ thể. Cấu trúc bảng đặc trưng đóng gói: các cột SN#, Product ID, Description, Qty, UM, Packing, Net weight (kg), Gross weight (kg) — đặc biệt việc tách Net weight và Gross weight là dấu hiệu rất đặc trưng. Thông tin trọng lượng và thể tích tổng, Total volume . Đây là thông tin phục vụ vận chuyển và thông quan. Thông tin nhà sản xuất - ghi rõ nguồn gốc sản xuất hàng hóa. Có phần ký duyệt - xác nhận lô hàng đã được kiểm tra và phê duyệt. Thông tin bên lập: đầy đủ tên, địa chỉ, điện thoại, fax, email, website bên lập. Nội dung phiếu này không ghi bên nhận hàng. Định dạng: form chuẩn hóa, PDF hoặc Excel, đầy đủ thông tin cho hải quan"
+            },
+            {
+              "level3": "general_text",
+              "description": "Fallback — chunk thuộc loại tài liệu này nhưng không match level 3 cụ thể nào ở trên."
+            }
+          ]
+        },
+        {
+          "level2": "bill_of_lading",
+          "level2_vi": "Vận đơn đường biển",
+          "description": "bill_of_lading / Vận đơn đường biển. Tiêu đề/ngữ cảnh: [Bill of Lading, B/L, Ocean Bill of Lading, Combined Transport Bill of Lading] kèm mã số B/L. Logo và tên hãng vận tải – bên phát hành vận đơn. Ba bên tham gia: Shipper (bên gửi), Consignee (bên nhận), Notify Party (bên được thông báo). Thông tin hành trình: tên tàu (Vessel Name), Port of Loading (cảng xếp hàng), Place of Delivery (cảng dỡ hàng), điểm trung chuyển. Thông tin container: Container No., Seal Number, loại container. Thông tin hàng hóa: số kiện, mô tả hàng, Gross Weight, Measurement, HS Code. Điều kiện vận chuyển: CY/CY, Freight Prepaid/Collect, Shipper's Load Count & Seal. Có thể có ghi chú TELEX RELEASE hoặc dấu ORIGINAL. Có dấu ON BOARD xác nhận hàng đã lên tàu. Con dấu và chữ ký của Carrier hoặc đại lý. Số bản gốc (Number of Original B/L). Tính chất: chứng từ sở hữu hàng hóa, có giá trị pháp lý, dùng cho vận chuyển và thông quan. Định dạng: form chuẩn quốc tế, thường là PDF bản gốc hoặc bản scan.",
+          "metadata": {
+            "bl_number": "Số vận đơn/B/L No.",
+            "bl_type": "Loại vận đơn (Original/Telex Release/Surrendered/Sea Waybill/Combined Transport)",
+            "bl_date": "Ngày phát hành (DD/MM/YYYY)",
+            "on_board_date": "Ngày hàng lên tàu/On Board Date (DD/MM/YYYY)",
+            "carrier_name": "Tên hãng vận tải/Carrier/Shipping Line",
+            "shipper_name": "Tên bên gửi hàng/Shipper/Exporter",
+            "shipper_address": "Địa chỉ bên gửi hàng/Shipper/Exporter",
+            "consignee_name": "Tên bên nhận hàng/Consignee",
+            "consignee_address": "Địa chỉ bên nhận hàng/Consignee",
+            "notify_party_name": "Bên được thông báo/Notify Party",
+            "notify_party_address": "Địa chỉ Bên được thông báo/Notify Party",
+            "document_type": "bill_of_lading - Vận đơn đường biển"
+          },
+          "has_level3": false,
+          "level3_list": [
+            {
+              "level3": "bill_of_lading",
+              "description": "bill_of_lading / Vận đơn đường biển. Tiêu đề/ngữ cảnh: [Bill of Lading, B/L, Ocean Bill of Lading, Combined Transport Bill of Lading] kèm mã số B/L. Logo và tên hãng vận tải – bên phát hành vận đơn. Ba bên tham gia: Shipper (bên gửi), Consignee (bên nhận), Notify Party (bên được thông báo). Thông tin hành trình: tên tàu (Vessel Name), Port of Loading (cảng xếp hàng), Place of Delivery (cảng dỡ hàng), điểm trung chuyển. Thông tin container: Container No., Seal Number, loại container. Thông tin hàng hóa: số kiện, mô tả hàng, Gross Weight, Measurement, HS Code. Điều kiện vận chuyển: CY/CY, Freight Prepaid/Collect, Shipper's Load Count & Seal. Có thể có ghi chú TELEX RELEASE hoặc dấu ORIGINAL. Có dấu ON BOARD xác nhận hàng đã lên tàu. Con dấu và chữ ký của Carrier hoặc đại lý. Số bản gốc (Number of Original B/L). Tính chất: chứng từ sở hữu hàng hóa, có giá trị pháp lý, dùng cho vận chuyển và thông quan. Định dạng: form chuẩn quốc tế, thường là PDF bản gốc hoặc bản scan"
+            },
+            {
+              "level3": "general_text",
+              "description": "Fallback — chunk thuộc loại tài liệu này nhưng không match level 3 cụ thể nào ở trên."
+            }
+          ]
+        },
+        {
+          "level2": "delivery_order",
+          "level2_vi": "Phiếu giao hàng",
+          "description": "delivery_order (D/O) – Phiếu giao hàng. thông tin đặc trưng:. Tiêu đề/ngữ cảnh: [Delivery Order, D/O, Phiếu giao hàng, Phiếu xuất kho] kèm Delivery No. Có Delivery Date (ngày giao hàng), Salesperson (nhân viên phụ trách), Job Code (mã công việc). Có mã liên kết ngược về Purchase Order (Our ref # / PO number). Thông tin bên giao hàng: tên, logo, địa chỉ, liên hệ. Thông tin bên nhận hàng: \"Ship to\" ghi rõ tên và địa chỉ giao hàng. Bảng hàng hóa: Item code, Description, Qty, UM – chỉ có số lượng, không có giá. Phần Comments về tình trạng hàng hóa. Hai phần ký nhận: bên giao (Issued by) và bên nhận (Customer acceptance). Không có đơn giá, thành tiền (khác Invoice). Không có trọng lượng Net/Gross (khác Packing List). Tính chất: xác nhận việc giao nhận hàng hóa thực tế giữa hai bên. Định dạng: form chuẩn hóa, thường là PDF hoặc Excel, có chữ ký cả hai bên.",
+          "metadata": {
+            "delivery_no": "Số phiếu giao hàng / Delivery No. / D/O No.",
+            "delivery_date": "Ngày giao hàng (DD/MM/YYYY)",
+            "issuer_name": "Tên công ty giao hàng (bên bán)",
+            "issuer_address": "Địa chỉ công ty giao hàng (bên bán)",
+            "recipient_name": "Tên đơn vị nhận hàng",
+            "recipient_address": "Địa chỉ nhận hàng",
+            "items": [{"item_code": "Mã sản phẩm"}],
+            "document_type": "Delivery_Order - Phiếu giao hàng"
+          },
+          "has_level3": false,
+          "level3_list": [
+            {
+              "level3": "delivery_order",
+              "description": "delivery_order (D/O) – Phiếu giao hàng. thông tin đặc trưng:. Tiêu đề/ngữ cảnh: \"\"Delivery Order\"\", \"\"D/O\"\", \"\"Phiếu giao hàng\"\", \"\"Phiếu xuất kho\"\" kèm Delivery No. Có Delivery Date (ngày giao hàng), Salesperson (nhân viên phụ trách), Job Code (mã công việc). Có mã liên kết ngược về Purchase Order (Our ref # / PO number). Thông tin bên giao hàng: tên, logo, địa chỉ, liên hệ. Thông tin bên nhận hàng: \"\"Ship to\"\" ghi rõ tên và địa chỉ giao hàng. Bảng hàng hóa: Item code, Description, Qty, UM – chỉ có số lượng, không có giá. Phần Comments về tình trạng hàng hóa. Hai phần ký nhận: bên giao (Issued by) và bên nhận (Customer acceptance). Không có đơn giá, thành tiền (khác Invoice). Không có trọng lượng Net/Gross (khác Packing List). Tính chất: xác nhận việc giao nhận hàng hóa thực tế giữa hai bên. Định dạng: form chuẩn hóa, thường là PDF hoặc Excel, có chữ ký cả hai bên"
+            },
+            {
+              "level3": "general_text",
+              "description": "Fallback — chunk thuộc loại tài liệu này nhưng không match level 3 cụ thể nào ở trên."
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "level1": "general_text",
+      "level1_vi": "Nội dung tổng hợp",
+      "level2_list": [
+        {
+          "level2": "general_text",
+          "level2_vi": "Nội dung chung",
+          "description": "Đây là nhóm fallback — file hoặc chunk nào không phân loại được vào bất kỳ domain nào ở trên thì vào đây.",
+          "metadata": null,
+          "has_level3": false,
+          "level3_list": [
+            {
+              "level3": "general_text",
+              "description": "Fallback — chunk không phân loại được."
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}
