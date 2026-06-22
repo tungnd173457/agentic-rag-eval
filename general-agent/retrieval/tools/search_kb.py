@@ -19,8 +19,6 @@ from retrieval.tools import _store
 from retrieval.tools._rerank import rerank
 from retrieval.tools.base import ToolResult, ToolSpec
 from services.embedding import EmbeddingError, embed_texts
-from utils.taxonomy import load_domain_config
-
 log = structlog.get_logger(__name__)
 
 BACKEND_DOWN = (
@@ -40,30 +38,7 @@ keyword search. Prefer several small targeted searches over one broad one.
 
 Results are ranked sections with a [chunk_id] in brackets — cite these ids in your \
 answer. To read a full section and its neighbours, call kb_get_document with the \
-chunk_id. Use the domains filter ONLY when the question clearly maps to specific \
-document types; leave it empty to search everything."""
-
-
-def _domain_enum() -> list[str]:
-    # general_text is the standalone classification fallback (taxonomy.taxonomy
-    # FALLBACK_LEVEL2) — chunks DO carry it, but it is not in any level2_list.
-    codes = {
-        l2["level2"]
-        for dom in load_domain_config()["domains"]
-        for l2 in dom["level2_list"]
-    }
-    codes.add("general_text")
-    return sorted(codes)
-
-
-def _domain_gloss() -> str:
-    pairs = sorted(
-        (l2["level2"], l2.get("level2_vi", ""))
-        for dom in load_domain_config()["domains"]
-        for l2 in dom["level2_list"]
-    )
-    glosses = "; ".join(f"{code} ({vi})" for code, vi in pairs)
-    return glosses + "; general_text (unclassified/general documents)"
+chunk_id. Prefer several small targeted searches over one broad one."""
 
 
 def spec() -> ToolSpec:
@@ -81,14 +56,6 @@ def spec() -> ToolSpec:
                         "'INV-2024-117 payment status'."
                     ),
                 },
-                "domains": {
-                    "type": "array",
-                    "items": {"type": "string", "enum": _domain_enum()},
-                    "description": (
-                        "Optional document-type filter (empty = all). Values: "
-                        + _domain_gloss()
-                    ),
-                },
             },
             "required": ["query"],
             "additionalProperties": False,
@@ -103,7 +70,6 @@ def _chunk_ref(parent: dict) -> str:
 
 def kb_search(
     query: str,
-    domains: list[str] | None = None,
     *,
     exclude_chunk_ids: set[str] | None = None,
 ) -> ToolResult:
@@ -122,23 +88,16 @@ def kb_search(
             vector,
             alpha=app_config.KB_SEARCH_HYBRID_ALPHA,
             limit=app_config.KB_SEARCH_WIDE_K,
-            domains=domains or None,
+            domains=None,
         )
     except _store.StoreError as exc:
         log.warning("kb_search.weaviate_failed", error=str(exc))
         return ToolResult(text=BACKEND_DOWN)
 
     if not children:
-        suffix = (
-            " or (3) removing the domain filter"
-            if domains
-            else ""
-        )
         return ToolResult(text=(
-            f'No results for "{query}"'
-            + (f" in domains {domains}" if domains else "")
-            + ". Try: (1) different or shorter phrasing, (2) the document's "
-            "language (Vietnamese for most documents)" + suffix + "."
+            f'No results for "{query}". Try: (1) different or shorter phrasing, '
+            "(2) the document's language (Vietnamese for most documents)."
         ))
 
     # Group children by parent, preserving best-hit order (in-call dedupe).
@@ -183,19 +142,16 @@ def kb_search(
         log.warning("kb_search.section_count_failed", error=str(exc))
         counts = {}
 
-    return _render(query, domains, top, total=len(parents), counts=counts)
+    return _render(query, top, total=len(parents), counts=counts)
 
 
 def _render(
     query: str,
-    domains: list[str] | None,
     parents: list[dict],
     *,
     total: int,
     counts: dict[str, int],
 ) -> ToolResult:
-    suffix = f" (domains: {', '.join(domains)})" if domains else ""
-
     lines: list[str] = []
     sources: list[dict] = []
     shown = 0
@@ -215,17 +171,15 @@ def _render(
             "chunk_id": _chunk_ref(p),
             "doc_id": p["doc_id"],
             "position": p["position"],
-            # Same fallback as the rendered entry so source chips never show
-            # blank where the text showed a filename.
             "title": p.get("title") or p.get("filename") or "",
             "domain": p.get("domain_level_2", ""),
         })
 
-    header = f'Results 1-{shown} of {total} for "{query}"{suffix}\n'
+    header = f'Results 1-{shown} of {total} for "{query}"\n'
     footer = ""
     hidden = total - shown
     if hidden > 0:
-        footer += f"\n{hidden} more matches not shown. Narrow the query or add a domain filter."
+        footer += f"\n{hidden} more matches not shown. Narrow the query."
     footer += (
         "\nCite sources using the [chunk_id] shown in brackets. "
         "Use kb_get_document with the doc_id and positions (e.g. [3,4,5]) to read a "
