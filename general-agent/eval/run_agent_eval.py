@@ -42,7 +42,6 @@ def _doc_ids_from_sources(sources: list[dict]) -> list[str]:
     ))
 
 
-
 async def answer_one(question: dict, system_prompt: str) -> dict:
     from retrieval.agent.orchestrator import run_agent
 

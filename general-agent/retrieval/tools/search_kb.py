@@ -19,6 +19,7 @@ from retrieval.tools import _store
 from retrieval.tools._rerank import rerank
 from retrieval.tools.base import ToolResult, ToolSpec
 from services.embedding import EmbeddingError, embed_texts
+
 log = structlog.get_logger(__name__)
 
 BACKEND_DOWN = (
