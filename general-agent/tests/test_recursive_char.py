@@ -11,10 +11,10 @@ def test_fixed_separator_splits_paragraphs():
     assert split_text("a\n\nb\n\nc", 100, "\n\n", SEPS) == ["a", "b", "c"]
 
 
-def test_oversized_piece_split_by_space_into_equal_chunks():
-    text = " ".join(["aaaa"] * 10)  # 49 chars, no newline
-    out = split_text(text, 20, "", SEPS)
-    assert out == ["a" * 20, "a" * 20]
+def test_oversized_piece_split_by_space_preserves_spaces():
+    # Dify-faithful: split on " " re-attaches the separator, so spaces survive
+    # the greedy merge (no "aabb" concatenation).
+    assert split_text("aa bb cc dd", 5, "", SEPS) == ["aa ", "bb ", "cc dd"]
 
 
 def test_char_level_fallback_when_no_separator():

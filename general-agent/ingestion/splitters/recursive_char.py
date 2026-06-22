@@ -59,9 +59,10 @@ def _recursive_split(text: str, chunk_size: int, separators: list[str]) -> list[
     sep, rest = _choose_separator(text, separators)
     if sep == "":
         splits = list(text)
-    elif sep == " ":
-        splits = text.split(" ")
     else:
+        # Re-attach the separator to every piece (incl. " ") so the greedy
+        # merge reconstructs the original spacing — Dify keeps separators via
+        # _merge_splits(join=separator); this is the plan-consistent equivalent.
         parts = text.split(sep)
         splits = [p + sep for p in parts[:-1]] + [parts[-1]]
     splits = [s for s in splits if s not in ("", "\n")]
