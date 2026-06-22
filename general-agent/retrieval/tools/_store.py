@@ -13,6 +13,7 @@ from __future__ import annotations
 import json
 
 import structlog
+from weaviate.classes.aggregate import GroupByAggregate
 from weaviate.classes.query import Filter, MetadataQuery, Sort
 from weaviate.exceptions import WeaviateBaseError
 
@@ -149,6 +150,28 @@ def count_parents(doc_id: str) -> int:
     except WeaviateBaseError as exc:
         raise StoreError(str(exc)) from exc
     return result.total_count or 0
+
+
+def count_parents_by_doc(doc_ids: list[str]) -> dict[str, int]:
+    """Total parent sections per ``doc_id``, resolved in ONE grouped aggregate
+    (feeds the "Sections in document: N" hint in kb_search results — so a single
+    search render never fans out into one count query per hit)."""
+    ids = [d for d in dict.fromkeys(doc_ids) if d]
+    if not ids:
+        return {}
+    where = Filter.all_of([
+        Filter.any_of([Filter.by_property("doc_id").equal(d) for d in ids]),
+        Filter.by_property("kind").equal("parent"),
+    ])
+    try:
+        result = _chunk_collection().aggregate.over_all(
+            filters=where,
+            group_by=GroupByAggregate(prop="doc_id"),
+            total_count=True,
+        )
+    except WeaviateBaseError as exc:
+        raise StoreError(str(exc)) from exc
+    return {str(g.grouped_by.value): (g.total_count or 0) for g in result.groups}
 
 
 def doc_info(doc_id: str) -> dict | None:
