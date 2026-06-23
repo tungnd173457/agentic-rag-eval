@@ -30,7 +30,7 @@ BACKEND_DOWN = (
 
 DESCRIPTION = """Search Laoscitec's internal knowledge base of import-export business \
 documents (contracts, invoices, purchase orders, project proposals, customs and \
-logistics records, company policies — mostly Vietnamese, some English). It does NOT \
+logistics records, company policies). It does NOT \
 contain general world knowledge, news, or law texts beyond company documents.
 
 Matching is hybrid: short concept phrases work best (e.g. "điều khoản thanh toán hợp \
@@ -99,7 +99,7 @@ def kb_search(
     if not children:
         return ToolResult(text=(
             f'No results for "{query}". Try: (1) different or shorter phrasing, '
-            "(2) the document's language (Vietnamese for most documents)."
+            "(2) the document's language."
         ))
 
     # Group children by parent, preserving best-hit order (in-call dedupe).
