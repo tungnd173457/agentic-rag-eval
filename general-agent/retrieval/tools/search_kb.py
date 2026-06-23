@@ -66,7 +66,8 @@ def spec() -> ToolSpec:
 
 
 def _chunk_ref(parent: dict) -> str:
-    return f"{parent['doc_id'][:8]}#p{parent['position']}"
+    # Positions are stored 0-based; the agent sees them 1-based (p1..pN).
+    return f"{parent['doc_id'][:8]}#p{parent['position'] + 1}"
 
 
 def kb_search(
@@ -135,7 +136,7 @@ def kb_search(
     top = [parents[i] for i in order]
 
     # Best-effort: how many sections each hit's document has, so the agent knows
-    # the valid position range for kb_get_document (p0..N-1) without a probe call.
+    # the valid position range for kb_get_document (p1..N) without a probe call.
     # A failure here just drops the hint — it never sinks the search.
     try:
         counts = _store.count_parents_by_doc([p["doc_id"] for p in top])
@@ -158,10 +159,8 @@ def _render(
     shown = 0
     for i, p in enumerate(parents, 1):
         text = " ".join(p["text"].split())
-        date = (p.get("updated_at") or "")[:10]
         fields = [f'Chunk retrieved in file: {p.get("filename") or "?"}']
         fields.append(f'Domain: {p.get("domain_level_2", "")}')
-        fields.append(f"Updated: {date}")
         section_count = counts.get(p["doc_id"])
         if section_count is not None:
             fields.append(f"Sections in document: {section_count}")
@@ -171,7 +170,7 @@ def _render(
         sources.append({
             "chunk_id": _chunk_ref(p),
             "doc_id": p["doc_id"],
-            "position": p["position"],
+            "position": p["position"] + 1,  # 1-based, matching the chunk_ref
             "title": p.get("title") or p.get("filename") or "",
             "domain": p.get("domain_level_2", ""),
         })
@@ -185,6 +184,6 @@ def _render(
         "\nCite sources using the [chunk_id] shown in brackets. "
         "Use kb_get_document with the doc_id and positions (e.g. [3,4,5]) to read a "
         "section and its neighbours. 'Sections in document: N' is that document's "
-        "valid position range — p0 to pN-1; do not request positions outside it."
+        "valid position range — p1 to pN; do not request positions outside it."
     )
     return ToolResult(text=header + "\n".join(lines) + footer, sources=sources)

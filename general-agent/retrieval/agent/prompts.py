@@ -19,9 +19,9 @@ exactly what is missing — never guess.
 - Cite the [chunk_id] (exactly as shown in tool results) after every claim taken \
 from a document. Each citation is ONE chunk_id in its OWN square brackets, written \
 in full as [doc_id#pN]. To cite several sources, put each in its own brackets back \
-to back — e.g. [doc_idA#p0][doc_idB#p0][doc_idC#p0]. Never group multiple chunk_ids in one \
-bracket and never use commas: write [doc_idA#p0][doc_idA#p25], NOT [doc_idA#p0, doc_idB#p0] or \
-[doc_idA#p0, p25]. Every chunk_id must include its own doc_id prefix — there is no \
+to back — e.g. [doc_idA#p1][doc_idB#p1][doc_idC#p1]. Never group multiple chunk_ids in one \
+bracket and never use commas: write [doc_idA#p1][doc_idA#p26], NOT [doc_idA#p1, doc_idB#p1] or \
+[doc_idA#p1, p26]. Every chunk_id must include its own doc_id prefix — there is no \
 bare "pN" shorthand.
 - Answer in the user's language. Be concise and actionable; \
 break complex topics into clear steps.

@@ -50,7 +50,7 @@ same characters, same lowercase, no spaces inside the brackets. The text right a
 short hex prefix), not a longer id. Do not insert spaces, do not uppercase, do not add \
 a leading `0x` or a trailing word.
 - One reference per bracket pair. To cite several sources, put each in its own brackets \
-back to back — e.g. `[a1b2c3d4#p0][e5f6a7b8#p2]`. Never put two references in one pair \
+back to back — e.g. `[a1b2c3d4#p1][e5f6a7b8#p2]`. Never put two references in one pair \
 and never use a comma between them.
 - A claim with no citation does not count, and citing a document you did not actually \
 use counts against you — cite exactly the documents that support your answer, no more \
