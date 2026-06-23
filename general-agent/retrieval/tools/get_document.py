@@ -150,7 +150,7 @@ def _render(
     meta = info or {}
     approx_tokens = (meta.get("char_count") or 0) // CHARS_PER_TOKEN
     header = (
-        f"{meta.get('filename') or window[0].get('filename') or '?'} "
+        f"{_store.display_filename(meta.get('filename') or window[0].get('filename'))} "
         f"(doc {prefix}, domain: "
         f"{meta.get('domain_level_2') or window[0].get('domain_level_2', '')}, "
     )

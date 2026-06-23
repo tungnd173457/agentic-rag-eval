@@ -29,6 +29,15 @@ class StoreError(RuntimeError):
     """Weaviate unreachable or returned a query error."""
 
 
+def display_filename(filename: str | None) -> str:
+    # Gold-doc filenames are dsid_<uuid32hex>__<slug>.txt. Showing the raw name
+    # tempts the agent to cite "dsid_<uuid>" as a doc_id instead of the [chunk_ref]
+    # prefix. Strip the dsid_<uuid>__ prefix so only the human-readable slug shows.
+    if not filename:
+        return "?"
+    return filename.split("__", 1)[1] if "__" in filename else filename
+
+
 CHILD_FIELDS = [
     "doc_id", "chunk_id", "parent_id", "domain_level_2", "title", "text",
     "position", "filename", "updated_at",

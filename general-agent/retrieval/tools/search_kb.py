@@ -159,7 +159,7 @@ def _render(
     shown = 0
     for i, p in enumerate(parents, 1):
         text = " ".join(p["text"].split())
-        fields = [f'Chunk retrieved in file: {p.get("filename") or "?"}']
+        fields = [f'Chunk retrieved in file: {_store.display_filename(p.get("filename"))}']
         fields.append(f'Domain: {p.get("domain_level_2", "")}')
         section_count = counts.get(p["doc_id"])
         if section_count is not None:
