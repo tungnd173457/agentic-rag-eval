@@ -42,8 +42,8 @@ DESCRIPTION = (
     "kb_search returned its full text — so never pass it back here; that only "
     "returns text you already have and wastes the call. Request only the "
     "neighbours you have NOT seen: hit at p4 → positions=[3,5] (before and after, "
-    "NOT [4] and NOT [3,4,5]); hit at p0 → positions=[1] since there is no p-1 "
-    "(NOT [0]).\n\n"
+    "NOT [4] and NOT [3,4,5]); hit at p1 → positions=[2] since p1 is the first "
+    "section and there is nothing before it (NOT [1]).\n\n"
     "The response header shows how many sections the document has, so you know the "
     "valid range. Use this only when a hit looks relevant but you need the "
     "surrounding clauses, table rows, or context to answer precisely — if the "
@@ -67,7 +67,7 @@ def spec() -> ToolSpec:
                 },
                 "positions": {
                     "type": "array",
-                    "items": {"type": "integer", "minimum": 0},
+                    "items": {"type": "integer", "minimum": 1},
                     "description": (
                         "Neighbouring section positions you have NOT read yet "
                         "(see the tool description for which positions to pass)."
@@ -88,10 +88,12 @@ def kb_get_document(
     if not prefix:
         return ToolResult(text=BAD_DOC_ID)
 
-    # Normalize: non-negative ints only, dedup, sort ascending.
+    # The agent works in 1-based positions (p1..pN); storage is 0-based. Convert
+    # to 0-based here, then everything below stays 0-based and only display sites
+    # add +1 back. Normalize: positive ints only, dedup, sort ascending.
     wanted = sorted({
-        p for p in positions
-        if isinstance(p, int) and not isinstance(p, bool) and p >= 0
+        p - 1 for p in positions
+        if isinstance(p, int) and not isinstance(p, bool) and p >= 1
     })
     if not wanted:
         return ToolResult(text=NO_POSITIONS)
@@ -125,8 +127,8 @@ def kb_get_document(
             return _mongo_fallback(full_id, prefix)
         return ToolResult(text=(
             "No sections at positions "
-            + ", ".join(f"p{p}" for p in wanted)
-            + f". This document has sections p0–p{total - 1}."
+            + ", ".join(f"p{p + 1}" for p in wanted)
+            + f". This document has sections p1–p{total}."
         ))
 
     return _render(full_id, window, total, wanted, dropped)
@@ -151,7 +153,6 @@ def _render(
         f"{meta.get('filename') or window[0].get('filename') or '?'} "
         f"(doc {prefix}, domain: "
         f"{meta.get('domain_level_2') or window[0].get('domain_level_2', '')}, "
-        f"updated: {(meta.get('updated_at') or '')[:10]}"
     )
     if meta.get("page_count"):
         header += f", {meta['page_count']} pages"
@@ -165,26 +166,26 @@ def _render(
         body = p["text"]
         if len(body) > per_section:
             body = body[:per_section] + "\n… (section truncated)"
-        ref = f"{prefix}#p{p['position']}"
+        ref = f"{prefix}#p{p['position'] + 1}"
         parts.append(f"[{ref}] {p.get('title', '')}\n{body}")
         sources.append({
             "chunk_id": ref,
             "doc_id": full_id,
-            "position": p["position"],
+            "position": p["position"] + 1,  # 1-based, matching the ref
             "title": p.get("title", ""),
             "domain": p.get("domain_level_2", ""),
         })
 
     found = {p["position"] for p in window}
     missing = [p for p in wanted if p not in found]
-    footer = f"Sections present: p0–p{total - 1}."
+    footer = f"Sections present: p1–p{total}."
     if missing:
-        footer += "\nNo section at: " + ", ".join(f"p{p}" for p in missing) + "."
+        footer += "\nNo section at: " + ", ".join(f"p{p + 1}" for p in missing) + "."
     if dropped:
         footer += (
             f"\nShowing first {len(window)} of {len(wanted) + len(dropped)} "
             "requested positions; call again for: "
-            + ", ".join(f"p{p}" for p in dropped) + "."
+            + ", ".join(f"p{p + 1}" for p in dropped) + "."
         )
     parts.append(footer)
     return ToolResult(text="\n\n".join(parts), sources=sources)

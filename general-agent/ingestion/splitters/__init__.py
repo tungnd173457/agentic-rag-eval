@@ -1,9 +1,13 @@
-"""3B parent/child structural splitter (stages 1-4).
+"""Parent/child splitter (recursive-character, Dify-style).
 
-``split_document`` turns 3A markdown into parent chunks (context) and child
-chunks (embed/search), sized in characters (develop ``common/parent_child``
-convention). level3 classification (stage 5) lives in
-``..classifiers.level3_classifier``.
+Two tiers, sizes measured in CHARACTERS, overlap = 0:
+  - parent: split per ``PARENT_MODE`` ("paragraph" → recursive split_text;
+    "full-doc" → whole document as one parent).
+  - child : each parent re-split with the CHILD_* knobs; only children are
+    embedded/searched, parents are returned as LLM context.
+
+Public API: ``split_document(markdown) -> (list[Parent], list[Child])``,
+plus the ``Parent`` and ``Child`` dataclasses.
 """
 from .parent_child import Child, Parent, split_document
 

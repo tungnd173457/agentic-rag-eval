@@ -1,7 +1,7 @@
 """Ingestion-side settings: extraction, parent/child split, reconcile, infra.
 
 Grouped under ``IngestionConfig`` and folded into ``AppConfig`` — read via
-``app_config`` (e.g. ``app_config.BUCKET_NAME``, ``app_config.PC_PARENT_MAX_CHARS``).
+``app_config`` (e.g. ``app_config.BUCKET_NAME``, ``app_config.PARENT_MAX_CHARS``).
 No standalone instance, no module constants. Domain enums live in
 ``ingestion/constants.py``.
 """
@@ -29,20 +29,18 @@ class ExtractConfig(BaseSettings):
 
 
 class SplitConfig(BaseSettings):
-    """3B chunking (CHARACTER-based) + level3 batching.
+    """3B chunking kiểu Dify (recursive-character, CHARACTER-based).
 
-    NOTE: the cross-field relationships (overlap ≤ child ≤ parent,
-    parent_min ≤ parent_max) are validated at use-time in
-    ``ingestion/splitters/parent_child.py:_validate_thresholds`` — not here.
+    Quan hệ chéo (``CHILD_MAX_CHARS ≤ PARENT_MAX_CHARS``) được kiểm ở use-time
+    trong ``ingestion/splitters/parent_child.py:_validate_thresholds``.
     """
 
-    PC_PARENT_MAX_CHARS: PositiveInt = Field(default=10000, description="Parent ceiling — split parents (text or table) larger than this.")
-    PC_PARENT_MIN_CHARS: PositiveInt = Field(default=2000, description="Parent floor — merge/fold parents smaller than this into a neighbour.")
-    PC_CHILD_MIN_CHARS: PositiveInt = Field(default=300, description="Minimum child chunk size.")
-    PC_CHILD_MAX_CHARS: PositiveInt = Field(default=512, description="Maximum child chunk size.")
-    PC_CHILD_OVERLAP: NonNegativeInt = Field(default=40, description="Child sliding-window overlap.")
-    LEVEL3_BATCH_MAX_CHARS: PositiveInt = Field(default=12000, description="Prompt-size budget per level3 LLM call.")
-    LEVEL3_MAX_PARENTS_PER_CALL: PositiveInt = Field(default=12, description="Max parents per level3 LLM call.")
+    PARENT_MODE: str = Field(default="paragraph", description='Cách tạo parent: "paragraph" (cắt nhiều parent) hoặc "full-doc" (cả tài liệu = 1 parent).')
+    PARENT_MAX_CHARS: PositiveInt = Field(default=1024, description="chunk_size khi cắt parent (paragraph mode).")
+    PARENT_SEPARATOR: str = Field(default="\n\n", description="fixed_separator tầng parent.")
+    CHILD_MAX_CHARS: PositiveInt = Field(default=512, description="chunk_size khi cắt child.")
+    CHILD_SEPARATOR: str = Field(default="\n", description="fixed_separator tầng child.")
+    RECURSIVE_SEPARATORS: list[str] = Field(default_factory=lambda: ["\n\n", "。", ". ", " ", ""], description="Danh sách separator đệ quy dùng chung cho cả 2 tầng.")
 
 
 class ReconcileConfig(BaseSettings):
